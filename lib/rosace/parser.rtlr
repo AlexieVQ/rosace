@@ -74,7 +74,7 @@ method_call		<- methods_chain  { |c| chain_to_expression(c) }
 
 sym_read		<- lident { SymbolReading.new(_) }
 
-function		<- lident arguments { |s, a| Function.new(s, a) }
+function		<- lident arguments { |s, a| FunctionCall.new(s, a) }
 
 picker			<- uident arguments? { |s, a| Picker.new(s, a[0] || []) }
 

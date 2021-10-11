@@ -24,7 +24,7 @@ require_relative 'refinements'
 #
 # expression	:= MethodCall(expression, symbol, argument*)
 #				 | SymbolReading (symbol)
-#				 | Function(symbol, argument*)
+#				 | FunctionCall(symbol, argument*)
 #				 | Picker(symbol, argument*)
 #				 | AssignmentExpr(assignment)
 #				 | Reference(symbol, id)
@@ -733,7 +733,7 @@ module Rosace::ASD
 	end
 
 	# A function call.
-	class Function < Expression
+	class FunctionCall < Expression
 		
 		# @return [Symbol] name of the function
 		attr_reader :symbol
