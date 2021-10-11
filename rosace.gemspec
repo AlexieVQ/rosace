@@ -43,9 +43,45 @@ Gem::Specification.new do |spec|
     "lib/rosace/data_types/text.rb",
     "lib/rosace/data_types/weight.rb"
   ]
+  spec.test_files    = [
+    "test/run_test.rb",
+    "test/test_helper.rb",
+    "test/test_rand_text_core.rb",
+    "test/test_refinements.rb",
+    "test/test_context.rb",
+    "test/test_entity.rb",
+    "test/test_utils.rb",
+    "test/test_data_types.rb",
+    "test/test_asd.rb",
+    "test/test_parser.rb",
+    "test/invalid_dir1/duplicated_id.csv",
+    "test/invalid_dir1/empty.csv",
+    "test/invalid_dir1/extra_field.csv",
+    "test/invalid_dir1/invalid name.csv",
+    "test/invalid_dir1/invalid_attr_name.csv",
+    "test/invalid_dir1/invalid_enum.csv",
+    "test/invalid_dir1/invalid_id.csv",
+    "test/invalid_dir1/invalid_mult_enum.csv",
+    "test/invalid_dir1/invalid_reference.csv",
+    "test/invalid_dir1/malformed_mult_enum.csv",
+    "test/invalid_dir1/missing_field.csv",
+    "test/invalid_dir1/no_id.csv",
+    "test/invalid_dir1/null_reference.csv",
+    "test/invalid_dir1/simple_rule.csv",
+    "test/valid_dir1/multiple_enum.csv",
+    "test/valid_dir1/optional_reference.csv",
+    "test/valid_dir1/required_reference.csv",
+    "test/valid_dir1/simple_enum.csv",
+    "test/valid_dir1/simple_rule.csv",
+    "test/valid_dir1/weighted_rule.csv",
+    "test/valid_dir2/main_entity.csv",
+    "test/valid_dir2/opt_child.csv",
+    "test/valid_dir2/req_child.csv"
+  ]
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
   spec.add_runtime_dependency 'csv', '~> 3.1'
   spec.add_runtime_dependency 'rattler', '~> 0.6'
+  spec.add_development_dependency 'simplecov', '~> 0.21'
 end

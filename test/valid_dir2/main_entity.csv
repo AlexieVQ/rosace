@@ -1,0 +1,4 @@
+id,value
+1,"has required children 1\,3 and optional children 2\,3"
+2,"has required child 2 and no optional child"
+3,"has required children 4\,5 and optional child 1"
