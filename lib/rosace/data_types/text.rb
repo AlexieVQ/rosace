@@ -17,7 +17,7 @@ class Rosace::DataTypes::Text < Rosace::DataTypes::DataType
 			super(*args)
 			begin
 				# @type [ASD::Node]
-				@ast = Parser.parse!(plain_value ? plain_value : "")
+				@ast = Rosace::Parser.parse!(plain_value ? plain_value : "")
 				@ast.set_location(rule_name, entity_id, attribute)
 			rescue Rattler::Runtime::SyntaxError => e
 				# @type [String, nil]

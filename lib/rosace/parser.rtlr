@@ -1,7 +1,8 @@
 require 'rattler'
+require_relative '../rosace'
 require_relative 'asd'
 
-parser Parser < Rattler::Runtime::ExtendedPackratParser
+parser Rosace::Parser < Rattler::Runtime::ExtendedPackratParser
 
 include Rosace::ASD
 
