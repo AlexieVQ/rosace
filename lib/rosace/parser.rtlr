@@ -1,0 +1,95 @@
+require 'rattler'
+require_relative 'asd'
+
+parser Parser < Rattler::Runtime::ExtendedPackratParser
+
+include Rosace::ASD
+
+start			<- choice EOF
+
+choice			<- variant (~'|' variant)* { |v1, vs| Choice.new([v1] + vs) }
+
+arg_choice		<- arg_variant (~'|' arg_variant)*
+				   { |v1, vs| Choice.new([v1] + vs) }
+
+variant			<- part* { Variant.new(_.flatten) }
+
+arg_variant		<- arg_part* { Variant.new(_.flatten) }
+
+part			<- text / statements / optional / ~'(' choice ~')'
+
+arg_part		<- arg_text / statements / optional / ~'(' choice ~')'
+
+text			<- char+ { Text.new(_.join('')) }
+
+arg_text		<- arg_char+ { Text.new(_.join('')) }
+
+char			<- ',' / arg_char
+
+arg_char		<- !('\\' / ',' / '{' / '(' / ')' / '|') .
+				 / ~'\\' [\\,{}()|?]
+
+arguments		<- ~'(' (arg_choice (~',' arg_choice)*)? ~')' { _.flatten }
+
+optional		<- ~'(' choice ~')?' { Optional.new(_) }
+
+comment			<- '/*' (! '*/' .)* '*/'
+
+%whitespace (SPACE+ / comment)*
+
+statements		<- ~'{' statement? (~';' statement)* ~';'? ~'}'
+				   { |s1, ss| s1 + ss }
+
+statement		<- predicate / assignment / setter / print
+
+print			<- expression { Print.new(_) }
+
+assignment		<- lident assign_operator expression
+				   { |s, o, e| Assignment.new(s, o, e) }
+
+assign_operator	<- "=" / "||="
+
+setter			<- methods_chain assign_operator expression
+				   { |c, o, e| expr_setter(c, o, e) }
+
+predicate		<- lident ~'!' { Predicate.new(_) }
+
+expression		<- method_call
+				 / atom_expr
+
+atom_expr		<- function
+				 / reference
+				 / picker
+				 / sym_read
+				 / assignment_expr
+				 / setter_expr
+#				 / ~'`' expression ~'`'
+
+methods_chain	<- atom_expr? (~'.' chain_part)+ { |e, ps| [e[0]] + ps }
+
+chain_part		<- ident arguments? { |s, as| ChainPart.new(s, as[0] || []) }
+
+method_call		<- methods_chain  { |c| chain_to_expression(c) }
+
+sym_read		<- lident { SymbolReading.new(_) }
+
+function		<- lident arguments { |s, a| Function.new(s, a) }
+
+picker			<- uident arguments? { |s, a| Picker.new(s, a[0] || []) }
+
+reference		<- uident ~'[' @DIGIT+ ~']' { |s, i| Reference.new(s, i.to_i) }
+
+assignment_expr	<- ~'`' assignment ~'`' { AssignmentExpr.new(_) }
+
+setter_expr		<- ~'`' setter ~'`' { SetterExpr.new(_) }
+
+lident			<- @([a-z] WORD*) { _.to_sym }
+
+uident			<- @([A-Z] WORD*) { _.to_sym }
+
+ident			<- @([a-zA-Z_] WORD*) { _.to_sym }
+
+symbol			<- @(ident ('?' / '!')? / '..' / '|' / '^' / '&' / '<=>' /
+				   '==' / '===' / '=~' / '>' / '>=' /'<' / '<=' / '+' / '-' /
+				   '*' / '/' / '%' / '**' / '<<' / '>>' / '~' / '+@' /'-@' /
+				   '[]' / '[]=') { _.to_sym }
