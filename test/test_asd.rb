@@ -1,14 +1,14 @@
 require_relative 'test_helper'
-require_relative '../lib/rand_text_core/asd'
-require_relative '../lib/rand_text_core/entity'
-require_relative '../lib/rand_text_core/context'
-require_relative '../lib/rand_text_core/function'
-require_relative '../lib/rand_text_core/rtc_exception'
-require_relative '../lib/rand_text_core/symbol_exception'
+require_relative '../lib/rosace/asd'
+require_relative '../lib/rosace/entity'
+require_relative '../lib/rosace/context'
+require_relative '../lib/rosace/function'
+require_relative '../lib/rosace/rtc_exception'
+require_relative '../lib/rosace/symbol_exception'
 
 class TestASD < Test::Unit::TestCase
 
-	include RandTextCore::ASD
+	include Rosace::ASD
 
 	VALID_DIR1 = "test/valid_dir1/"
 	ENUM = [:value1, :value2, :value3]
@@ -16,7 +16,7 @@ class TestASD < Test::Unit::TestCase
 	def setup
 
 		@valid_dir1 = {
-			SimpleRule: Class.new(RandTextCore::Entity) do
+			SimpleRule: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'simple_rule.csv'
 
 				attr_accessor :my_attr
@@ -30,7 +30,7 @@ class TestASD < Test::Unit::TestCase
 				end
 			end,
 
-			WeightedRule: Class.new(RandTextCore::Entity) do
+			WeightedRule: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'weighted_rule.csv'
 
 				def pick?(min_weight)
@@ -38,35 +38,35 @@ class TestASD < Test::Unit::TestCase
 				end
 			end,
 
-			OptionalReference: Class.new(RandTextCore::Entity) do
+			OptionalReference: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'optional_reference.csv'
 
 				reference :entity_ref, :SimpleRule, :optional
 			end,
 
-			RequiredReference: Class.new(RandTextCore::Entity) do
+			RequiredReference: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'required_reference.csv'
 
 				reference :entity_ref, :SimpleRule, :required
 			end,
 
-			SimpleEnum: Class.new(RandTextCore::Entity) do
+			SimpleEnum: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'simple_enum.csv'
 
 				enum :value, *ENUM
 			end,
 
-			MultipleEnum: Class.new(RandTextCore::Entity) do
+			MultipleEnum: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'multiple_enum.csv'
 
 				mult_enum :values, *ENUM
 			end
 		}
 		@valid_dir1.each_value { |rule| rule.send(:init_rule) }
-		@valid_dir1_ctx = RandTextCore::Context.new([
-			RandTextCore::Function::CAT,
-			RandTextCore::Function::PICK,
-			RandTextCore::Function::S
+		@valid_dir1_ctx = Rosace::Context.new([
+			Rosace::Function::CAT,
+			Rosace::Function::PICK,
+			Rosace::Function::S
 		], @valid_dir1.values)
 		@text1 = Text.new("my first text")
 		@text1.set_location(:SimpleRule, 1, :attribute)
@@ -132,7 +132,7 @@ class TestASD < Test::Unit::TestCase
 	end
 
 	def test_eval2b
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			Choice.new([
 				Variant.new([@print1])
 			]).try_eval(@valid_dir1_ctx)
@@ -140,7 +140,7 @@ class TestASD < Test::Unit::TestCase
 	end
 	
 	def test_eval2c
-		assert_raise(RandTextCore::RTCException) do
+		assert_raise(Rosace::RTCException) do
 			@predicate1.try_eval(@valid_dir1_ctx)
 		end
 	end
@@ -195,7 +195,7 @@ class TestASD < Test::Unit::TestCase
 				@picker.try_eval(@valid_dir1_ctx).id
 			)
 		end
-		assert_raise(RandTextCore::RTCException) do
+		assert_raise(Rosace::RTCException) do
 			Picker.new(
 				:WeightedRule,
 				[Text.new("20")]
@@ -241,7 +241,7 @@ class TestASD < Test::Unit::TestCase
 			@valid_dir1_ctx.entity(:SimpleRule, 2).attr2
 		)
 		assert_false(@valid_dir1_ctx.entity(:SimpleRule, 1).respond_to?(:attr2))
-		assert_raise(RandTextCore::RTCException) do
+		assert_raise(Rosace::RTCException) do
 			@setter2.try_eval(@valid_dir1_ctx)
 		end
 	end
@@ -429,7 +429,7 @@ class TestASD < Test::Unit::TestCase
 		node = Node.new
 
 		assert_true(node.deterministic?)
-		assert_raise(RandTextCore::RTCException) do
+		assert_raise(Rosace::RTCException) do
 			node.send(:eval, @valid_dir1_ctx)
 		end
 

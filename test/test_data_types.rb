@@ -1,8 +1,8 @@
 require_relative 'test_helper'
-require_relative '../lib/rand_text_core/function'
-require_relative '../lib/rand_text_core/entity'
-require_relative '../lib/rand_text_core/context'
-require_relative '../lib/rand_text_core/data_types'
+require_relative '../lib/rosace/function'
+require_relative '../lib/rosace/entity'
+require_relative '../lib/rosace/context'
+require_relative '../lib/rosace/data_types'
 
 class TestDataTypes < Test::Unit::TestCase
 
@@ -12,109 +12,109 @@ class TestDataTypes < Test::Unit::TestCase
 	ENUM = [:value1, :value2, :value3]
 
 	def setup
-		@enum = RandTextCore::DataTypes::Enum[*ENUM]
-		@identifier = RandTextCore::DataTypes::Identifier.type
-		@opt_ref = RandTextCore::DataTypes::Reference.new(:target, :optional)
-		@req_ref = RandTextCore::DataTypes::Reference.new(:target, :required)
-		@text = RandTextCore::DataTypes::Text.type
-		@weight = RandTextCore::DataTypes::Weight.type
-		@mult_enum = RandTextCore::DataTypes::MultEnum[*ENUM]
+		@enum = Rosace::DataTypes::Enum[*ENUM]
+		@identifier = Rosace::DataTypes::Identifier.type
+		@opt_ref = Rosace::DataTypes::Reference.new(:target, :optional)
+		@req_ref = Rosace::DataTypes::Reference.new(:target, :required)
+		@text = Rosace::DataTypes::Text.type
+		@weight = Rosace::DataTypes::Weight.type
+		@mult_enum = Rosace::DataTypes::MultEnum[*ENUM]
 
-		@simple_rule_opt_ref = RandTextCore::DataTypes::Reference.new(
+		@simple_rule_opt_ref = Rosace::DataTypes::Reference.new(
 			:SimpleRule,
 			:optional
 		)
-		@simple_rule_req_ref = RandTextCore::DataTypes::Reference.new(
+		@simple_rule_req_ref = Rosace::DataTypes::Reference.new(
 			:SimpleRule,
 			:required
 		)
 
 		@valid_dir1 = {
-			SimpleRule: Class.new(RandTextCore::Entity) do
+			SimpleRule: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'simple_rule.csv'
 			end,
 
-			WeightedRule: Class.new(RandTextCore::Entity) do
+			WeightedRule: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'weighted_rule.csv'
 			end,
 
-			OptionalReference: Class.new(RandTextCore::Entity) do
+			OptionalReference: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'optional_reference.csv'
 
 				reference :entity_ref, :SimpleRule, :optional
 			end,
 
-			RequiredReference: Class.new(RandTextCore::Entity) do
+			RequiredReference: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'required_reference.csv'
 
 				reference :entity_ref, :SimpleRule, :required
 			end,
 
-			SimpleEnum: Class.new(RandTextCore::Entity) do
+			SimpleEnum: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'simple_enum.csv'
 
 				enum :value, *ENUM
 			end,
 
-			MultipleEnum: Class.new(RandTextCore::Entity) do
+			MultipleEnum: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'multiple_enum.csv'
 
 				mult_enum :values, *ENUM
 			end
 		}
 		@valid_dir1.each_value { |rule| rule.send(:init_rule) }
-		@valid_dir1_st = RandTextCore::Context.new([
-			RandTextCore::Function::S
+		@valid_dir1_st = Rosace::Context.new([
+			Rosace::Function::S
 		], @valid_dir1.values)
 
 		@invalid_dir1 = {
-			SimpleRule: Class.new(RandTextCore::Entity) do
+			SimpleRule: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'simple_rule.csv'
 			end,
-			NoId: Class.new(RandTextCore::Entity) do
+			NoId: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'no_id.csv'
 			end,
-			InvalidId: Class.new(RandTextCore::Entity) do
+			InvalidId: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'invalid_id.csv'
 			end,
-			DuplicatedId: Class.new(RandTextCore::Entity) do
+			DuplicatedId: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'duplicated_id.csv'
 			end,
-			ExtraField: Class.new(RandTextCore::Entity) do
+			ExtraField: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'extra_field.csv'
 			end,
-			MissingField: Class.new(RandTextCore::Entity) do
+			MissingField: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'missing_field.csv'
 			end,
-			Empty: Class.new(RandTextCore::Entity) do
+			Empty: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'empty.csv'
 			end,
-			InvalidEnum: Class.new(RandTextCore::Entity) do
+			InvalidEnum: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'invalid_enum.csv'
 
 				enum :value, *ENUM
 			end,
-			InvalidMultEnum: Class.new(RandTextCore::Entity) do
+			InvalidMultEnum: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'invalid_mult_enum.csv'
 
 				mult_enum :values, *ENUM
 			end,
-			MalformedMultEnum: Class.new(RandTextCore::Entity) do
+			MalformedMultEnum: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'malformed_mult_enum.csv'
 
 				mult_enum :values, *ENUM
 			end,
-			NullReference: Class.new(RandTextCore::Entity) do
+			NullReference: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'null_reference.csv'
 
 				reference :ref, :SimpleRule, :required
 			end,
-			InvalidReference: Class.new(RandTextCore::Entity) do
+			InvalidReference: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'invalid_reference.csv'
 
 				reference :ref, :SimpleRule, :required
 			end,
-			InvalidAttrName: Class.new(RandTextCore::Entity) do
+			InvalidAttrName: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'invalid_attr_name.csv'
 			end
 		}
@@ -126,7 +126,7 @@ class TestDataTypes < Test::Unit::TestCase
 		@invalid_dir1[:MalformedMultEnum].send(:init_rule)
 		@invalid_dir1[:NullReference].send(:init_rule)
 		@invalid_dir1[:InvalidReference].send(:init_rule)
-		@invalid_dir1_st = RandTextCore::Context.new({}, [
+		@invalid_dir1_st = Rosace::Context.new({}, [
 			@invalid_dir1[:SimpleRule],
 			@invalid_dir1[:InvalidId],
 			@invalid_dir1[:MissingField],
@@ -277,27 +277,27 @@ class TestDataTypes < Test::Unit::TestCase
 
 	def test_equal
 		assert_equal(
-			RandTextCore::DataTypes::Enum[:value1, :value3, :value2],
-			RandTextCore::DataTypes::Enum[:value3, :value1, :value2]
+			Rosace::DataTypes::Enum[:value1, :value3, :value2],
+			Rosace::DataTypes::Enum[:value3, :value1, :value2]
 		)
 		assert_equal(
-			RandTextCore::DataTypes::MultEnum[:value1, :value3, :value2],
-			RandTextCore::DataTypes::MultEnum[:value3, :value1, :value2]
+			Rosace::DataTypes::MultEnum[:value1, :value3, :value2],
+			Rosace::DataTypes::MultEnum[:value3, :value1, :value2]
 		)
 		assert_equal(
 			@opt_ref,
-			RandTextCore::DataTypes::Reference.new(:target, :optional)
+			Rosace::DataTypes::Reference.new(:target, :optional)
 		)
 	end
 
 	def test_initialization
 		assert_raise(ArgumentError) do
-			RandTextCore::DataTypes::Reference.new(:target, :optimal)
+			Rosace::DataTypes::Reference.new(:target, :optimal)
 		end
 	end
 
 	def test_multiple_calls
-		my_text = RandTextCore::DataTypes::Text.type.data(
+		my_text = Rosace::DataTypes::Text.type.data(
 			*@floc,
 			"{my_var = s(arg1|arg2)}"
 		)
@@ -309,12 +309,12 @@ class TestDataTypes < Test::Unit::TestCase
 	end
 
 	def test_single_call_fail
-		my_text = RandTextCore::DataTypes::Text.type.data(
+		my_text = Rosace::DataTypes::Text.type.data(
 			*@floc,
 			"{my_var = s(arg1|arg2)}"
 		)
 		@valid_dir1_st.store_variable(:my_var, "my string")
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			my_text.value(@valid_dir1_st)
 		end
 	end

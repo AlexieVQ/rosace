@@ -1,10 +1,10 @@
 require_relative 'test_helper'
-require_relative '../lib/rand_text_core/asd'
-require_relative '../lib/rand_text_core/parser'
+require_relative '../lib/rosace/asd'
+require_relative '../lib/rosace/parser'
 
 class TestParser < Test::Unit::TestCase
 	
-	include RandTextCore::ASD
+	include Rosace::ASD
 
 	def test_valid1
 		assert_equal(

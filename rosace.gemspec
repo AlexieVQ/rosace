@@ -46,7 +46,6 @@ Gem::Specification.new do |spec|
   spec.test_files    = [
     "test/run_test.rb",
     "test/test_helper.rb",
-    "test/test_rand_text_core.rb",
     "test/test_refinements.rb",
     "test/test_context.rb",
     "test/test_entity.rb",

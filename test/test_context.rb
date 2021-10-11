@@ -1,10 +1,10 @@
 require_relative 'test_helper'
-require_relative '../lib/rand_text_core/context'
-require_relative '../lib/rand_text_core/entity'
-require_relative '../lib/rand_text_core/symbol_exception'
-require_relative '../lib/rand_text_core/function'
-require_relative '../lib/rand_text_core/contextual_value'
-require_relative '../lib/rand_text_core/rtc_exception'
+require_relative '../lib/rosace/context'
+require_relative '../lib/rosace/entity'
+require_relative '../lib/rosace/symbol_exception'
+require_relative '../lib/rosace/function'
+require_relative '../lib/rosace/contextual_value'
+require_relative '../lib/rosace/rtc_exception'
 
 class TestContext < Test::Unit::TestCase
 
@@ -12,7 +12,7 @@ class TestContext < Test::Unit::TestCase
 
 	def setup
 		@rules = {
-			SimpleRule: Class.new(RandTextCore::Entity) do
+			SimpleRule: Class.new(Rosace::Entity) do
 
 				attr_accessor :my_var
 
@@ -26,42 +26,42 @@ class TestContext < Test::Unit::TestCase
 					self.id <= number.to_i
 				end
 			end,
-			WeightedRule: Class.new(RandTextCore::Entity) do
+			WeightedRule: Class.new(Rosace::Entity) do
 				self.file = TEST_DIR + 'weighted_rule.csv'
 			end,
-			RequiredReference: Class.new(RandTextCore::Entity) do
+			RequiredReference: Class.new(Rosace::Entity) do
 				self.file = TEST_DIR + 'required_reference.csv'
 				reference :entity_ref, :SimpleRule, :required
 			end,
-			OptionalReference: Class.new(RandTextCore::Entity) do
+			OptionalReference: Class.new(Rosace::Entity) do
 				self.file = TEST_DIR + 'optional_reference.csv'
 				reference :entity_ref, :SimpleRule, :optional
 			end,
-			SimpleEnum: Class.new(RandTextCore::Entity) do
+			SimpleEnum: Class.new(Rosace::Entity) do
 				self.file = TEST_DIR + 'simple_enum.csv'
 				enum :value, :value1, :value2, :value3
 			end
 		}
 		@rules.each_value { |rule| rule.send(:init_rule) }
-		@context = RandTextCore::Context.new(
+		@context = Rosace::Context.new(
 			[
-				RandTextCore::Function.new(:ret_arg, ->(arg) do
+				Rosace::Function.new(:ret_arg, ->(arg) do
 					arg
 				end, :concurrent),
-				RandTextCore::Function.new(:add, ->(n1, n2) do
-					RandTextCore::ContextualValue.new(
+				Rosace::Function.new(:add, ->(n1, n2) do
+					Rosace::ContextualValue.new(
 						(n1.value.to_i + n2.value.to_i).to_s,
 						n1.context
 					)
 				end, :sequential),
-				RandTextCore::Function.new(:exists, ->(arg) do
+				Rosace::Function.new(:exists, ->(arg) do
 					unless arg.context.variable?(arg.value.to_sym)
-						raise RandTextCore::RTCException
+						raise Rosace::RTCException
 					end
-					RandTextCore::ContextualValue.empty(arg.context)
+					Rosace::ContextualValue.empty(arg.context)
 				end, :concurrent),
-				RandTextCore::Function.new(:join, ->(*args) do
-					RandTextCore::ContextualValue.new(
+				Rosace::Function.new(:join, ->(*args) do
+					Rosace::ContextualValue.new(
 						args.map { |arg| arg.value }.join(' '),
 						args[0].context
 					)
@@ -121,7 +121,7 @@ class TestContext < Test::Unit::TestCase
 			@context.entity(:SimpleRule, 3),
 			@context.fetch_variable(:var3)
 		)
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			@context.fetch_variable(:var8)
 		end
 	end
@@ -219,13 +219,13 @@ class TestContext < Test::Unit::TestCase
 	def test_store_variable
 		@context.store_variable(:var8, 8)
 		assert_equal(8, @context.variable(:var8))
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			@context.store_variable(:var2, 4)
 		end
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			@context.store_variable(:self, 8)
 		end
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			@context.store_variable(:add, 4)
 		end
 	end
@@ -237,50 +237,50 @@ class TestContext < Test::Unit::TestCase
 	def test_reset
 		@context.reset
 		assert_equal(0, @context.variables_number)
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			@context.fetch_variable(:var1)
 		end
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			@context.fetch_variable(:var2)
 		end
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			@context.fetch_variable(:var3)
 		end
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			@context.fetch_variable(:var4)
 		end
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			@context.fetch_variable(:var5)
 		end
-		assert_raise(RandTextCore::SymbolException) do
+		assert_raise(Rosace::SymbolException) do
 			@context.fetch_variable(:var6)
 		end
 	end
 
 	def test_invalid_initialize
-		assert_raise(TypeError) { RandTextCore::Context.new(4, []) }
-		assert_raise(TypeError) { RandTextCore::Context.new({}, 8) }
+		assert_raise(TypeError) { Rosace::Context.new(4, []) }
+		assert_raise(TypeError) { Rosace::Context.new({}, 8) }
 		assert_raise(TypeError) do
-			RandTextCore::Context.new({
+			Rosace::Context.new({
 				7 => -> { 7 }
 			}, [])
 		end
 		assert_raise(TypeError) do
-			RandTextCore::Context.new({
+			Rosace::Context.new({
 				fun: 7
 			}, [])
 		end
 		assert_raise(TypeError) do
-			RandTextCore::Context.new({
+			Rosace::Context.new({
 				fun: proc { 7 }
 			}, [])
 		end
-		assert_raise(TypeError) { RandTextCore::Context.new({}, [7]) }
+		assert_raise(TypeError) { Rosace::Context.new({}, [7]) }
 		assert_raise(TypeError) do
-			RandTextCore::Context.new({}, [Integer])
+			Rosace::Context.new({}, [Integer])
 		end
 		assert_raise(RuntimeError) do
-			RandTextCore::Context.new(
+			Rosace::Context.new(
 				{},
 				@rules.values + [@rules[:WeightedRule]]
 			)
@@ -328,16 +328,16 @@ class TestContext < Test::Unit::TestCase
 
 	def test_homonymous_functions
 		assert_raise do
-			RandTextCore::Context.new(
+			Rosace::Context.new(
 				[
-					RandTextCore::Function.new(:f1, ->(p1, p2) do
-						RandTextCore::ContextualValue.new(
+					Rosace::Function.new(:f1, ->(p1, p2) do
+						Rosace::ContextualValue.new(
 							p1.value + p2.value,
 							p1.context
 						)
 					end, :sequential),
-					RandTextCore::Function.new(:f2, ->(p) { p }, :sequential),
-					RandTextCore::Function.new(
+					Rosace::Function.new(:f2, ->(p) { p }, :sequential),
+					Rosace::Function.new(
 						:f1,
 						->(p1, p2) { p1 },
 						:concurrent

@@ -1,7 +1,7 @@
 require_relative 'test_helper'
-require_relative '../lib/rand_text_core/entity'
-require_relative '../lib/rand_text_core/context'
-require_relative '../lib/rand_text_core/data_types'
+require_relative '../lib/rosace/entity'
+require_relative '../lib/rosace/context'
+require_relative '../lib/rosace/data_types'
 
 class TestEntity < Test::Unit::TestCase
 
@@ -13,7 +13,7 @@ class TestEntity < Test::Unit::TestCase
 
 	def setup
 		@valid_dir1 = {
-			SimpleRule: Class.new(RandTextCore::Entity) do
+			SimpleRule: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'simple_rule.csv'
 
 				def value
@@ -21,7 +21,7 @@ class TestEntity < Test::Unit::TestCase
 				end
 			end,
 
-			WeightedRule: Class.new(RandTextCore::Entity) do
+			WeightedRule: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'weighted_rule.csv'
 
 				def weight
@@ -29,77 +29,77 @@ class TestEntity < Test::Unit::TestCase
 				end
 			end,
 
-			OptionalReference: Class.new(RandTextCore::Entity) do
+			OptionalReference: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'optional_reference.csv'
 
 				reference :entity_ref, :SimpleRule, :optional
 			end,
 
-			RequiredReference: Class.new(RandTextCore::Entity) do
+			RequiredReference: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'required_reference.csv'
 
 				reference :entity_ref, :SimpleRule, :required
 			end,
 
-			SimpleEnum: Class.new(RandTextCore::Entity) do
+			SimpleEnum: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'simple_enum.csv'
 
 				enum :value, *ENUM
 			end,
 
-			MultipleEnum: Class.new(RandTextCore::Entity) do
+			MultipleEnum: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'multiple_enum.csv'
 
 				mult_enum :values, *ENUM
 			end
 		}
 		@valid_dir1.each_value { |rule| rule.send(:init_rule) }
-		@valid_dir1_st = RandTextCore::Context.new({}, @valid_dir1.values)
+		@valid_dir1_st = Rosace::Context.new({}, @valid_dir1.values)
 
 		@invalid_dir1 = {
-			SimpleRule: Class.new(RandTextCore::Entity) do
+			SimpleRule: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'simple_rule.csv'
 			end,
-			NoId: Class.new(RandTextCore::Entity) do
+			NoId: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'no_id.csv'
 			end,
-			InvalidId: Class.new(RandTextCore::Entity) do
+			InvalidId: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'invalid_id.csv'
 			end,
-			DuplicatedId: Class.new(RandTextCore::Entity) do
+			DuplicatedId: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'duplicated_id.csv'
 			end,
-			ExtraField: Class.new(RandTextCore::Entity) do
+			ExtraField: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'extra_field.csv'
 			end,
-			MissingField: Class.new(RandTextCore::Entity) do
+			MissingField: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'missing_field.csv'
 			end,
-			Empty: Class.new(RandTextCore::Entity) do
+			Empty: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'empty.csv'
 			end,
-			InvalidEnum: Class.new(RandTextCore::Entity) do
+			InvalidEnum: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'invalid_enum.csv'
 
 				enum :value, *ENUM
 			end,
-			InvalidMultEnum: Class.new(RandTextCore::Entity) do
+			InvalidMultEnum: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'invalid_mult_enum.csv'
 			end,
-			MalformedMultEnum: Class.new(RandTextCore::Entity) do
+			MalformedMultEnum: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'malformed_mult_enum.csv'
 			end,
-			NullReference: Class.new(RandTextCore::Entity) do
+			NullReference: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'null_reference.csv'
 
 				reference :ref, :SimpleRule, :required
 			end,
-			InvalidReference: Class.new(RandTextCore::Entity) do
+			InvalidReference: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'invalid_reference.csv'
 
 				reference :ref, :SimpleRule, :required
 			end,
-			InvalidAttrName: Class.new(RandTextCore::Entity) do
+			InvalidAttrName: Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'invalid_attr_name.csv'
 			end
 		}
@@ -111,7 +111,7 @@ class TestEntity < Test::Unit::TestCase
 		@invalid_dir1[:MalformedMultEnum].send(:init_rule)
 		@invalid_dir1[:NullReference].send(:init_rule)
 		@invalid_dir1[:InvalidReference].send(:init_rule)
-		@invalid_dir1_st = RandTextCore::Context.new({}, [
+		@invalid_dir1_st = Rosace::Context.new({}, [
 			@invalid_dir1[:SimpleRule],
 			@invalid_dir1[:InvalidId],
 			@invalid_dir1[:MissingField],
@@ -123,32 +123,32 @@ class TestEntity < Test::Unit::TestCase
 		])
 
 		@valid_dir2 = {
-			MainEntity: Class.new(RandTextCore::Entity) do
+			MainEntity: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR2 + 'main_entity.csv'
 
 				has_many :ReqChild, :parent, :req_child, :required
 				has_many :OptChild, :parent, :opt_child, :optional
 			end,
-			ReqChild: Class.new(RandTextCore::Entity) do
+			ReqChild: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR2 + 'req_child.csv'
 
 				reference :parent, :MainEntity, :required
 			end,
-			OptChild: Class.new(RandTextCore::Entity) do
+			OptChild: Class.new(Rosace::Entity) do
 				self.file = VALID_DIR2 + 'opt_child.csv'
 
 				reference :parent, :MainEntity, :required
 			end
 		}
 		@valid_dir2.each_value { |rule| rule.send(:init_rule) }
-		@valid_dir2_st = RandTextCore::Context.new([], @valid_dir2.values)
+		@valid_dir2_st = Rosace::Context.new([], @valid_dir2.values)
 	end
 
 	def test_rule_name
 		@valid_dir1.each do |name, rule|
 			assert_equal(name, rule.rule_name)
 		end
-		simple_rule = Class.new(RandTextCore::Entity)
+		simple_rule = Class.new(Rosace::Entity)
 		assert_raise { simple_rule.rule_name }
 	end
 
@@ -177,7 +177,7 @@ class TestEntity < Test::Unit::TestCase
 			:multiple_enum,
 			@valid_dir1[:MultipleEnum].lower_snake_case_name
 		)
-		simple_rule = Class.new(RandTextCore::Entity)
+		simple_rule = Class.new(Rosace::Entity)
 		assert_raise { simple_rule.lower_snake_case_name }
 	end
 
@@ -206,18 +206,18 @@ class TestEntity < Test::Unit::TestCase
 			VALID_DIR1 + 'multiple_enum.csv',
 			@valid_dir1[:MultipleEnum].file
 		)
-		simple_rule = Class.new(RandTextCore::Entity)
+		simple_rule = Class.new(Rosace::Entity)
 		assert_raise { simple_rule.file }
 		assert_raise do
 			@valid_dir1[:SimpleRule].file = VALID_DIR1 + 'weighted_rule'
 		end
 		assert_raise do
-			Class.new(RandTextCore::Entity) do
+			Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'super_rule.csv'
 			end
 		end
 		assert_raise do
-			Class.new(RandTextCore::Entity) do
+			Class.new(Rosace::Entity) do
 				self.file = INVALID_DIR1 + 'invalid name.csv'
 			end
 		end
@@ -227,62 +227,62 @@ class TestEntity < Test::Unit::TestCase
 		assert_raise do
 			@valid_dir1[:SimpleRule].data_type(
 				:value,
-				RandTextCore::DataTypes::Text.type
+				Rosace::DataTypes::Text.type
 			)
 		end
 		assert_raise do
-			Class.new(RandTextCore::Entity) do
+			Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'simple_rule.csv'
 
-				data_type :id, RandTextCore::DataTypes::Reference.new(
+				data_type :id, Rosace::DataTypes::Reference.new(
 					:weighted_rule,
 					:required
 				)
 			end
 		end
 		assert_raises do
-			Class.new(RandTextCore::Entity) do
+			Class.new(Rosace::Entity) do
 				self.file = VALID_DIR1 + 'simple_enum.csv'
 
 				enum :value, *ENUM
-				data_type :value, RandTextCore::DataTypes::Enum[*ENUM]
+				data_type :value, Rosace::DataTypes::Enum[*ENUM]
 			end
 		end
 	end
 
 	def test_attr_types
 		assert_equal(
-			RandTextCore::DataTypes::Identifier.type,
+			Rosace::DataTypes::Identifier.type,
 			@valid_dir1[:SimpleEnum].attr_types[:id]
 		)
 		assert_equal(
-			RandTextCore::DataTypes::Weight.type,
+			Rosace::DataTypes::Weight.type,
 			@valid_dir1[:SimpleRule].attr_types[:weight]
 		)
 		assert_equal(
-			RandTextCore::DataTypes::Text.type,
+			Rosace::DataTypes::Text.type,
 			@valid_dir1[:SimpleRule].attr_types[:value]
 		)
 		assert_equal(
-			RandTextCore::DataTypes::Weight.type,
+			Rosace::DataTypes::Weight.type,
 			@valid_dir1[:WeightedRule].attr_types[:weight]
 		)
 		assert_equal(
-			RandTextCore::DataTypes::Reference.new(:SimpleRule, :optional),
+			Rosace::DataTypes::Reference.new(:SimpleRule, :optional),
 			@valid_dir1[:OptionalReference].attr_types[:entity_ref]
 		)
 		assert_equal(
-			RandTextCore::DataTypes::Reference.new(:SimpleRule, :required),
+			Rosace::DataTypes::Reference.new(:SimpleRule, :required),
 			@valid_dir1[:RequiredReference].attr_types[:entity_ref]
 		)
 		assert_equal(
-			RandTextCore::DataTypes::Enum[*ENUM],
+			Rosace::DataTypes::Enum[*ENUM],
 			@valid_dir1[:SimpleEnum].attr_types[:value]
 		)
 	end
 
 	def test_initialized?
-		simple_rule = Class.new(RandTextCore::Entity) do
+		simple_rule = Class.new(Rosace::Entity) do
 			self.file = VALID_DIR1 + 'simple_rule.csv'
 		end
 		assert_false(simple_rule.initialized?)
@@ -385,28 +385,28 @@ class TestEntity < Test::Unit::TestCase
 	end
 
 	def test_entity_call
-		assert_raise { RandTextCore::Entity.rule_name }
-		assert_raise { RandTextCore::Entity.lower_snake_case_name }
-		assert_raise { RandTextCore::Entity.file }
+		assert_raise { Rosace::Entity.rule_name }
+		assert_raise { Rosace::Entity.lower_snake_case_name }
+		assert_raise { Rosace::Entity.file }
 		assert_raise do
-			RandTextCore::Entity.file = VALID_DIR1 + 'simple_rule.csv'
+			Rosace::Entity.file = VALID_DIR1 + 'simple_rule.csv'
 		end
 		assert_raise do 
-			RandTextCore::Entity.data_type(
+			Rosace::Entity.data_type(
 				:value,
-				RandTextCore::DataTypes::Text.type
+				Rosace::DataTypes::Text.type
 			)
 		end
 		assert_raise do
-			RandTextCore::Entity.has_many(:target, :attribute, :optional)
+			Rosace::Entity.has_many(:target, :attribute, :optional)
 		end
 	end
 
 	def test_require_initialized_rule
 		assert_raise do
-			RandTextCore::Entity.send(:require_initialized_rule)
+			Rosace::Entity.send(:require_initialized_rule)
 		end
-		simple_rule = Class.new(RandTextCore::Entity) do
+		simple_rule = Class.new(Rosace::Entity) do
 			self.file = VALID_DIR1 + 'simple_rule.csv'
 		end
 		assert_raise do
@@ -442,14 +442,14 @@ class TestEntity < Test::Unit::TestCase
 	end
 
 	def test_invalid_1_N_relations
-		main_entity = Class.new(RandTextCore::Entity) do
+		main_entity = Class.new(Rosace::Entity) do
 			self.file = VALID_DIR2 + 'main_entity.csv'
 
 			has_many :ReqChild, :parent, :req_child, :required
 			has_many :OptChild, :parent, :opt_child, :required
 		end
 		main_entity.send(:init_rule)
-		st = RandTextCore::Context.new([], [
+		st = Rosace::Context.new([], [
 			main_entity,
 			@valid_dir2[:ReqChild],
 			@valid_dir2[:OptChild]
@@ -457,14 +457,14 @@ class TestEntity < Test::Unit::TestCase
 		assert_equal(1, main_entity.send(:verify, st).filter do |message|
 			message.level == 'ERROR'
 		end.length)
-		main_entity = Class.new(RandTextCore::Entity) do
+		main_entity = Class.new(Rosace::Entity) do
 			self.file = VALID_DIR2 + 'main_entity.csv'
 
 			has_many :ReqChild, :weight, :req_child, :required
 			has_many :OptChild, :parent, :opt_child, :optional
 		end
 		main_entity.send(:init_rule)
-		st = RandTextCore::Context.new([], [
+		st = Rosace::Context.new([], [
 			main_entity,
 			@valid_dir2[:ReqChild],
 			@valid_dir2[:OptChild]
@@ -472,14 +472,14 @@ class TestEntity < Test::Unit::TestCase
 		assert_equal(1, main_entity.send(:verify, st).filter do |message|
 			message.level == 'ERROR'
 		end.length)
-		main_entity = Class.new(RandTextCore::Entity) do
+		main_entity = Class.new(Rosace::Entity) do
 			self.file = VALID_DIR2 + 'main_entity.csv'
 
 			has_many :ReqChild, :parent, :req_child, :required
 			has_many :OptChild, :child, :opt_child, :optional
 		end
 		main_entity.send(:init_rule)
-		st = RandTextCore::Context.new([], [
+		st = Rosace::Context.new([], [
 			main_entity,
 			@valid_dir2[:ReqChild],
 			@valid_dir2[:OptChild]
@@ -487,14 +487,14 @@ class TestEntity < Test::Unit::TestCase
 		assert_equal(1, main_entity.send(:verify, st).filter do |message|
 			message.level == 'ERROR'
 		end.length)
-		main_entity = Class.new(RandTextCore::Entity) do
+		main_entity = Class.new(Rosace::Entity) do
 			self.file = VALID_DIR2 + 'main_entity.csv'
 
 			has_many :ReqChild, :parent, :req_child, :required
 			has_many :OtpChild, :parent, :opt_child, :optional
 		end
 		main_entity.send(:init_rule)
-		st = RandTextCore::Context.new([], [
+		st = Rosace::Context.new([], [
 			main_entity,
 			@valid_dir2[:ReqChild],
 			@valid_dir2[:OptChild]
@@ -503,7 +503,7 @@ class TestEntity < Test::Unit::TestCase
 			message.level == 'ERROR'
 		end.length)
 		assert_raise do
-			Class.new(RandTextCore::Entity) do
+			Class.new(Rosace::Entity) do
 				self.file = VALID_DIR2 + 'main_entity.csv'
 
 				has_many :ReqChild, :parent, :req_child, :required
@@ -511,7 +511,7 @@ class TestEntity < Test::Unit::TestCase
 			end
 		end
 		assert_raise(ArgumentError) do
-			Class.new(RandTextCore::Entity) do
+			Class.new(Rosace::Entity) do
 				self.file = VALID_DIR2 + 'main_entity.csv'
 
 				has_many :ReqChild, :parent, :req_child, :required
