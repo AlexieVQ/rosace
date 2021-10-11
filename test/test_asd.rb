@@ -1,4 +1,5 @@
 require_relative 'test_helper'
+require_relative '../lib/rosace'
 require_relative '../lib/rosace/asd'
 require_relative '../lib/rosace/entity'
 require_relative '../lib/rosace/context'
@@ -72,10 +73,10 @@ class TestASD < Test::Unit::TestCase
 		@text1.set_location(:SimpleRule, 1, :attribute)
 		@text2 = Text.new("my second text")
 		@text2.set_location(:SimpleRule, 1, :attribute)
-		@f1 = Function.new(:s, [@text2])
+		@f1 = FunctionCall.new(:s, [@text2])
 		@f1.set_location(:SimpleRule, 1, :attribute)
 		@assignment1 = Assignment.new(:var1, "=", @f1)
-		@assignment2 = Assignment.new(:var1, "||=", Function.new(:s, [@text1]))
+		@assignment2 = Assignment.new(:var1, "||=", FunctionCall.new(:s, [@text1]))
 		@assignment1.set_location(:SimpleRule, 1, :attribute)
 		@var1 = SymbolReading .new(:var1)
 		@var1.set_location(:SimpleRule, 1, :attribute)
@@ -107,7 +108,7 @@ class TestASD < Test::Unit::TestCase
 			@ref1,
 			:my_attr,
 			"||=",
-			Function.new(:s, [@text1])
+			FunctionCall.new(:s, [@text1])
 		)
 		@setter_expr = SetterExpr.new(@setter2).tap do |s|
 			s.set_location(:SimpleRule, 1, :attribute)
@@ -282,7 +283,7 @@ class TestASD < Test::Unit::TestCase
 		assert_empty(@setter_expr.verify(@valid_dir1_ctx))
 		assert_equal(
 			1,
-			Function.new(:function, []).tap do |f|
+			FunctionCall.new(:function, []).tap do |f|
 				f.set_location(:SimpleRule, 1, :attribute)
 			end.verify(@valid_dir1_ctx).select do |message|
 				message.level == 'ERROR'
@@ -290,14 +291,14 @@ class TestASD < Test::Unit::TestCase
 		)
 		assert_equal(
 			1,
-			Function.new(:s, []).tap do |f|
+			FunctionCall.new(:s, []).tap do |f|
 				f.set_location(:SimpleRule, 1, :attribute)
 			end.verify(@valid_dir1_ctx).
 				select { |message| message.level == 'ERROR' }.length
 		)
 		assert_equal(
 			1,
-			Function.new(:s, [@text1, @text2]).tap do |f|
+			FunctionCall.new(:s, [@text1, @text2]).tap do |f|
 				f.set_location(:SimpleRule, 1, :attribute)
 			end.verify(
 				@valid_dir1_ctx
@@ -440,8 +441,8 @@ class TestASD < Test::Unit::TestCase
 		assert_equal(Text.new("my first text"), @text1)
 		assert_equal(Text.new("my second text"), @text2)
 		assert_not_equal(@text1, @text2)
-		assert_equal(Function.new(:s, [@text2]), @f1)
-		assert_not_equal(Function.new(:s, [@text1]), @f1)
+		assert_equal(FunctionCall.new(:s, [@text2]), @f1)
+		assert_not_equal(FunctionCall.new(:s, [@text1]), @f1)
 		assert_equal(Assignment.new(:var1, "=", @f1), @assignment1)
 		assert_equal(SymbolReading.new(:var1), @var1)
 		assert_equal(Print.new(@var1), @print1)

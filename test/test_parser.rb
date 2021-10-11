@@ -1,4 +1,5 @@
 require_relative 'test_helper'
+require_relative '../lib/rosace'
 require_relative '../lib/rosace/asd'
 require_relative '../lib/rosace/parser'
 
@@ -13,7 +14,7 @@ class TestParser < Test::Unit::TestCase
 					Text.new("my text")
 				])
 			]),
-			Parser.parse!("my text")
+			Rosace::Parser.parse!("my text")
 		)
 	end
 
@@ -27,7 +28,7 @@ class TestParser < Test::Unit::TestCase
 					Text.new("my second variant")
 				])
 			]),
-			Parser.parse!("my first variant|my second variant")
+			Rosace::Parser.parse!("my first variant|my second variant")
 		)
 	end
 
@@ -56,7 +57,7 @@ class TestParser < Test::Unit::TestCase
 					)
 				])
 			]),
-			Parser.parse!(
+			Rosace::Parser.parse!(
 				"my text, (choice 1|choice 2)|my other text (print?)?"
 			)
 		)
@@ -70,7 +71,7 @@ class TestParser < Test::Unit::TestCase
 						SymbolReading.new(:var)
 					),
 					Print.new(
-						Function.new(:function, [
+						FunctionCall.new(:function, [
 							Choice.new([
 								Variant.new([
 									Text.new("argument1")
@@ -85,7 +86,7 @@ class TestParser < Test::Unit::TestCase
 					)
 				])
 			]),
-			Parser.parse!(
+			Rosace::Parser.parse!(
 				"{ var }{ function(argument1,argument2\\, still)}"
 			)
 		)
@@ -97,6 +98,7 @@ class TestParser < Test::Unit::TestCase
 				Variant.new([
 					Assignment.new(
 						:var,
+						"=",
 						Picker.new(:Rule, [
 							Choice.new([
 								Variant.new([
@@ -125,6 +127,7 @@ class TestParser < Test::Unit::TestCase
 							AssignmentExpr.new(
 								Assignment.new(
 									:var1,
+									"=",
 									MethodCall.new(
 										SymbolReading.new(:var),
 										:met,
@@ -142,7 +145,7 @@ class TestParser < Test::Unit::TestCase
 					)
 				])
 			]),
-			Parser.parse!(
+			Rosace::Parser.parse!(
 				"{var = Rule({v0.attr}|{v1.attr});
 					/* foo */ `var1 = var.met(arg)`.bar;}"
 			)

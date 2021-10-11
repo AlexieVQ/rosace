@@ -1,4 +1,5 @@
 require_relative 'test_helper'
+require_relative '../lib/rosace'
 require_relative '../lib/rosace/utils'
 
 class TestUtils < Test::Unit::TestCase
