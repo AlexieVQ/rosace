@@ -20,11 +20,29 @@ Gem::Specification.new do |spec|
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
-  spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    `git ls-files -z`.split("\x0").reject do |f|
-      (f == __FILE__) || f.match(%r{\A(?:(?:test|spec|features)/|\.(?:git|travis|circleci)|appveyor)})
-    end
-  end
+  spec.files = [
+    "lib/rosace.rb",
+    "lib/rosace/asd.rb",
+    "lib/rosace/context.rb",
+    "lib/rosace/contextual_value.rb",
+    "lib/rosace/data_types.rb",
+    "lib/rosace/entity.rb",
+    "lib/rosace/function.rb",
+    "lib/rosace/messages.rb",
+    "lib/rosace/parser.rb",
+    "lib/rosace/refinements.rb",
+    "lib/rosace/rtc_exception.rb",
+    "lib/rosace/symbol_exception.rb",
+    "lib/rosace/utils.rb",
+    "lib/rosace/version.rb",
+    "lib/rosace/data_types/enum.rb",
+    "lib/rosace/data_types/identifier.rb",
+    "lib/rosace/data_types/integer_type.rb",
+    "lib/rosace/data_types/mult_enum.rb",
+    "lib/rosace/data_types/reference.rb",
+    "lib/rosace/data_types/text.rb",
+    "lib/rosace/data_types/weight.rb"
+  ]
   spec.bindir        = "exe"
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
