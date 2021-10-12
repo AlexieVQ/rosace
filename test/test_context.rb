@@ -1,10 +1,9 @@
 require_relative 'test_helper'
 require_relative '../lib/rosace/context'
 require_relative '../lib/rosace/entity'
-require_relative '../lib/rosace/symbol_exception'
 require_relative '../lib/rosace/function'
 require_relative '../lib/rosace/contextual_value'
-require_relative '../lib/rosace/rtc_exception'
+require_relative '../lib/rosace/evaluation_exception'
 
 class TestContext < Test::Unit::TestCase
 
@@ -56,7 +55,7 @@ class TestContext < Test::Unit::TestCase
 				end, :sequential),
 				Rosace::Function.new(:exists, ->(arg) do
 					unless arg.context.variable?(arg.value.to_sym)
-						raise Rosace::RTCException
+						raise Rosace::EvaluationException
 					end
 					Rosace::ContextualValue.empty(arg.context)
 				end, :concurrent),
@@ -121,7 +120,7 @@ class TestContext < Test::Unit::TestCase
 			@context.entity(:SimpleRule, 3),
 			@context.fetch_variable(:var3)
 		)
-		assert_raise(Rosace::SymbolException) do
+		assert_raise(Rosace::EvaluationException) do
 			@context.fetch_variable(:var8)
 		end
 	end
@@ -219,13 +218,13 @@ class TestContext < Test::Unit::TestCase
 	def test_store_variable
 		@context.store_variable(:var8, 8)
 		assert_equal(8, @context.variable(:var8))
-		assert_raise(Rosace::SymbolException) do
+		assert_raise(Rosace::EvaluationException) do
 			@context.store_variable(:var2, 4)
 		end
-		assert_raise(Rosace::SymbolException) do
+		assert_raise(Rosace::EvaluationException) do
 			@context.store_variable(:self, 8)
 		end
-		assert_raise(Rosace::SymbolException) do
+		assert_raise(Rosace::EvaluationException) do
 			@context.store_variable(:add, 4)
 		end
 	end
@@ -237,22 +236,22 @@ class TestContext < Test::Unit::TestCase
 	def test_reset
 		@context.reset
 		assert_equal(0, @context.variables_number)
-		assert_raise(Rosace::SymbolException) do
+		assert_raise(Rosace::EvaluationException) do
 			@context.fetch_variable(:var1)
 		end
-		assert_raise(Rosace::SymbolException) do
+		assert_raise(Rosace::EvaluationException) do
 			@context.fetch_variable(:var2)
 		end
-		assert_raise(Rosace::SymbolException) do
+		assert_raise(Rosace::EvaluationException) do
 			@context.fetch_variable(:var3)
 		end
-		assert_raise(Rosace::SymbolException) do
+		assert_raise(Rosace::EvaluationException) do
 			@context.fetch_variable(:var4)
 		end
-		assert_raise(Rosace::SymbolException) do
+		assert_raise(Rosace::EvaluationException) do
 			@context.fetch_variable(:var5)
 		end
-		assert_raise(Rosace::SymbolException) do
+		assert_raise(Rosace::EvaluationException) do
 			@context.fetch_variable(:var6)
 		end
 	end

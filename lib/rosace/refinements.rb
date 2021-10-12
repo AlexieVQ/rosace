@@ -1,5 +1,5 @@
 require_relative '../rosace'
-require_relative 'rtc_exception'
+require_relative 'evaluation_exception'
 
 # Module containing refinements for Ruby classes.
 #

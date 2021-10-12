@@ -47,7 +47,7 @@ class Rosace::DataTypes::Text < Rosace::DataTypes::DataType
 		# Evaluates this text.
 		# @param context [Context] Evaluation context
 		# @return [String] Evaluated text
-		# @raise [RTCException] Exception during evaluation that has not been
+		# @raise [EvaluationException] Exception during evaluation that has not been
 		#  rescued.
 		def value(context)
 			saved_context = context.clone
@@ -55,7 +55,7 @@ class Rosace::DataTypes::Text < Rosace::DataTypes::DataType
 				# @type [String] Last evaluation, in case of failure if the
 				#  method is called again
 				@last_eval = @ast.try_eval(context)
-			rescue Rosace::RTCException => e
+			rescue Rosace::EvaluationException => e
 				context.restore_state(saved_context)
 				if @last_eval
 					@last_eval

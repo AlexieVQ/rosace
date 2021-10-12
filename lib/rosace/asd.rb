@@ -1,7 +1,7 @@
 require 'rattler'
 require_relative '../rosace'
 require_relative 'messages'
-require_relative 'rtc_exception'
+require_relative 'evaluation_exception'
 require_relative 'contextual_value'
 require_relative 'refinements'
 
@@ -75,17 +75,17 @@ module Rosace::ASD
 			true
 		end
 
-		# Expands this node, retry if a {RTCException} has been thrown during
+		# Expands this node, retry if a {EvaluationException} has been thrown during
 		# evaluation.
 		# @param context [Context] expansion context
 		# @return Evaluation result
-		# @raise [RTCException] Exception that has not been resolved
+		# @raise [EvaluationException] Exception that has not been resolved
 		def try_eval(context)
 			attempts = 5
 			saved_context = context.clone
 			begin
 				eval(context)
-			rescue Rosace::RTCException => e
+			rescue Rosace::EvaluationException => e
 				if self.deterministic? || attempts == 0
 					raise e
 				else
@@ -110,9 +110,9 @@ module Rosace::ASD
 		# Expands this node.
 		# @param [Context] context expansion context
 		# @return Evaluation result
-		# @raise [RTCException] exception during expansion
+		# @raise [EvaluationException] exception during expansion
 		def eval(context)
-			raise Rosace::RTCException, "No evaluation for node #{self}"
+			raise Rosace::EvaluationException, "No evaluation for node #{self}"
 		end
 
 	end
@@ -120,11 +120,11 @@ module Rosace::ASD
 	# Part of a {Variant}.
 	class Part < Node
 
-		# Expands this node, retry if a {RTCException} has been thrown during
+		# Expands this node, retry if a {EvaluationException} has been thrown during
 		# evaluation.
 		# @param context [Context] expansion context
 		# @return [String] output String
-		# @raise [RTCException] Exception that has not been resolved
+		# @raise [EvaluationException] Exception that has not been resolved
 		def try_eval(context)
 			super(context)
 		end
@@ -134,7 +134,7 @@ module Rosace::ASD
 		# Expands this node.
 		# @param [Context] context expansion context
 		# @return [String] output String
-		# @raise [RTCException] exception during expansion
+		# @raise [EvaluationException] exception during expansion
 		def eval(context)
 			""
 		end
@@ -172,7 +172,7 @@ module Rosace::ASD
 				# @type [Variant]
 				@variant = list.pop
 				eval(context)
-			rescue Rosace::RTCException => e
+			rescue Rosace::EvaluationException => e
 				if list.empty?
 					raise e
 				else
@@ -249,7 +249,7 @@ module Rosace::ASD
 		# Expands this node.
 		# @param [Context] context expansion context
 		# @return [String] output String
-		# @raise [RTCException] exception during expansion
+		# @raise [EvaluationException] exception during expansion
 		def eval(context)
 			parts.reduce("") do |out, part|
 				out + part.try_eval(context)
@@ -296,7 +296,7 @@ module Rosace::ASD
 			saved_context = context.clone
 			begin
 				eval(context)
-			rescue Rosace::RTCException
+			rescue Rosace::EvaluationException
 				context.restore_state(saved_context)
 				""
 			end
@@ -501,7 +501,7 @@ module Rosace::ASD
 			if context.variable?(symbol)
 				super(context)
 			else
-				raise Rosace::RTCException,
+				raise Rosace::EvaluationException,
 					"No variable named #{symbol} in current context"
 			end
 		end
@@ -579,7 +579,7 @@ module Rosace::ASD
 					receiver_out.send(setter, result)
 				elsif receiver_out.respond_to?(symbol) ||
 					receiver_out.instance_variable_defined?(variable)
-					raise Rosace::RTCException,
+					raise Rosace::EvaluationException,
 						"attribute #{symbol} already defined for object " +
 						receiver_out.inspect
 				else
@@ -912,7 +912,7 @@ module Rosace::ASD
 		# Picks an entity from rule {#rule}.
 		# @param context [Context] evaluation context
 		# @return [Entity] picked entity
-		# @raise [RTCException] No entities matching given {#arguments}
+		# @raise [EvaluationException] No entities matching given {#arguments}
 		def eval(context)
 			args = arguments.map { |arg| arg.try_eval(context) }
 			entities = context.entities(symbol).select do |entity|
@@ -920,7 +920,7 @@ module Rosace::ASD
 			end
 			entity = entities.pick
 			if entity.nil?
-				raise Rosace::RTCException,
+				raise Rosace::EvaluationException,
 					"No #{symbol} entities matching given arguments " +
 					"(#{args.join(', ')})"
 			end

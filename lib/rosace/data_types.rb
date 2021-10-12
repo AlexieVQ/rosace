@@ -59,7 +59,7 @@ module Rosace::DataTypes
 			# @param context [Context] Context to use to evaluate this piece of
 			#  data
 			# @returns Value of this piece of data in the target type
-			# @raise [RTCException] Exception thrown during its evaluation that
+			# @raise [EvaluationException] Exception thrown during its evaluation that
 			#  has not been rescued.
 			def value(context)
 				@plain_value

@@ -4,8 +4,7 @@ require_relative '../lib/rosace/asd'
 require_relative '../lib/rosace/entity'
 require_relative '../lib/rosace/context'
 require_relative '../lib/rosace/function'
-require_relative '../lib/rosace/rtc_exception'
-require_relative '../lib/rosace/symbol_exception'
+require_relative '../lib/rosace/evaluation_exception'
 
 class TestASD < Test::Unit::TestCase
 
@@ -133,7 +132,7 @@ class TestASD < Test::Unit::TestCase
 	end
 
 	def test_eval2b
-		assert_raise(Rosace::SymbolException) do
+		assert_raise(Rosace::EvaluationException) do
 			Choice.new([
 				Variant.new([@print1])
 			]).try_eval(@valid_dir1_ctx)
@@ -141,7 +140,7 @@ class TestASD < Test::Unit::TestCase
 	end
 	
 	def test_eval2c
-		assert_raise(Rosace::RTCException) do
+		assert_raise(Rosace::EvaluationException) do
 			@predicate1.try_eval(@valid_dir1_ctx)
 		end
 	end
@@ -196,7 +195,7 @@ class TestASD < Test::Unit::TestCase
 				@picker.try_eval(@valid_dir1_ctx).id
 			)
 		end
-		assert_raise(Rosace::RTCException) do
+		assert_raise(Rosace::EvaluationException) do
 			Picker.new(
 				:WeightedRule,
 				[Text.new("20")]
@@ -242,7 +241,7 @@ class TestASD < Test::Unit::TestCase
 			@valid_dir1_ctx.entity(:SimpleRule, 2).attr2
 		)
 		assert_false(@valid_dir1_ctx.entity(:SimpleRule, 1).respond_to?(:attr2))
-		assert_raise(Rosace::RTCException) do
+		assert_raise(Rosace::EvaluationException) do
 			@setter2.try_eval(@valid_dir1_ctx)
 		end
 	end
@@ -430,7 +429,7 @@ class TestASD < Test::Unit::TestCase
 		node = Node.new
 
 		assert_true(node.deterministic?)
-		assert_raise(Rosace::RTCException) do
+		assert_raise(Rosace::EvaluationException) do
 			node.send(:eval, @valid_dir1_ctx)
 		end
 

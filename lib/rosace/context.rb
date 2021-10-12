@@ -1,6 +1,6 @@
 require_relative '../rosace.rb'
 require_relative 'entity'
-require_relative 'symbol_exception'
+require_relative 'evaluation_exception'
 require_relative 'refinements'
 require_relative 'utils'
 require_relative 'function'
@@ -122,15 +122,15 @@ class Rosace::Context
 
 	# Returns stored value into variable of given name.
 	# Difference with {Context#[]} is that this method raises a
-	# SymbolException if the context does not contains variable of given name.
+	# EvaluationException if the context does not contains variable of given name.
 	# @param [#to_sym] name variable name
 	# @return [Object] value stored, or +nil+ if there is no variable of given
 	#  name
 	# @raise [TypeError] no implicit conversion of name into Symbol
-	# @raise [SymbolException] no variable of given name
+	# @raise [EvaluationException] no variable of given name
 	def fetch_variable(name)
 		unless self.variable?(name)
-			raise Rosace::SymbolException,
+			raise Rosace::EvaluationException,
 				"symbol #{name} does not exist in the context"
 		end
 		self.variable(name)
@@ -219,17 +219,17 @@ class Rosace::Context
 	# @param [Object] value value to store
 	# @return [Object] value stored
 	# @raise [TypeError] no implicit conversion of +name+ into Symbol
-	# @raise [SymbolException] variable of given name already
+	# @raise [EvaluationException] variable of given name already
 	#  exists in the context
 	def store_variable(name, value)
 		name = Rosace::Utils.sym(name)
 		if name == :self
-			raise Rosace::SymbolException, "symbol self is reserved"
+			raise Rosace::EvaluationException, "symbol self is reserved"
 		elsif @variables[name]
-			raise Rosace::SymbolException,
+			raise Rosace::EvaluationException,
 				"symbol #{name} already exists in the context"
 		elsif functions[name]
-			raise Rosace::SymbolException,
+			raise Rosace::EvaluationException,
 				"symbol #{name} is already the name of a function"
 		end
 		@variables[name] = value

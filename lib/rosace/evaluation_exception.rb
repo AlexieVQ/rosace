@@ -5,5 +5,4 @@ require_relative '../rosace'
 # This is not an error class for programming errors.
 #
 # @author AlexieVQ
-class Rosace::RTCException < Exception
-end
+class Rosace::EvaluationException < Exception; end
