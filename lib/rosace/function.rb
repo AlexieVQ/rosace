@@ -34,7 +34,7 @@ class Rosace::Function
 	#  {Function#type}
 	# @raise [TypeError] wrong argument types
 	# @raise [ArgumentError] wrong value for +type+.
-	def initialize(name, function, type)
+	def initialize(name, function, type = :sequential)
 		@name = Rosace::Utils.sym(name)
 		@function = Rosace::Utils.convert(function, :to_proc, Proc)
 		unless @function.lambda?
@@ -106,5 +106,14 @@ class Rosace::Function
 
 	# A function returning its argument.
 	S = new(:s, ->(string) { string }, :sequential)
+
+	# A function switching the first character of its argument to uppercase, but
+	# without modifying the other characters unlike {String#capitalize}.
+	CAPITALIZE = new(:capitalize, ->(string) do
+		Rosace::ContextualValue.new(
+			string.value[0].upcase + string.value[1, string.value.length],
+			string.context
+		)
+	end, :sequential)
 
 end
