@@ -14,7 +14,7 @@ class Rosace::DataTypes::Weight < Rosace::DataTypes::IntegerType
 			if value < 0
 				messages << Rosace::ErrorMessage.new(
 					"weight cannot ben negative",
-					context.rule(rule_name),
+					context.generator.rules[rule_name],
 					context.entity(rule_name, entity_id),
 					attribute
 				)

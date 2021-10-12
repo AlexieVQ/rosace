@@ -85,7 +85,7 @@ module Rosace::DataTypes
 					[
 						Rosace::ErrorMessage.new(
 							"Missing #{attribute} attribute",
-							context.rule(rule_name),
+							context.generator.rules[rule_name],
 							context.entity(rule_name, entity_id),
 							attribute
 						)

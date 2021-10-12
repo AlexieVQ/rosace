@@ -371,10 +371,10 @@ class Rosace::Entity
 			messages += type.verify(context, self, attribute)
 		end
 		@relations.each do |name, relation|
-			if context.rule?(relation[:foreign_rule])
-				type = context.rule(
+			if context.generator.rules.key?(relation[:foreign_rule])
+				type = context.generator.rules[
 					relation[:foreign_rule]
-				).attr_types[relation[:foreign_attribute]]
+				].attr_types[relation[:foreign_attribute]]
 				if type
 					unless type.is_a?(Rosace::DataTypes::Reference) &&
 						type.target == self.rule_name

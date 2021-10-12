@@ -62,12 +62,15 @@ class TestASD < Test::Unit::TestCase
 				mult_enum :values, *ENUM
 			end
 		}
-		@valid_dir1.each_value { |rule| rule.send(:init_rule) }
-		@valid_dir1_ctx = Rosace::Context.new([
-			Rosace::Function::CAT,
-			Rosace::Function::PICK,
-			Rosace::Function::S
-		], @valid_dir1.values)
+		@valid_dir1_gen = Rosace::Generator.new(
+			path: VALID_DIR1,
+			functions: [
+				Rosace::Function::CAT,
+				Rosace::Function::PICK,
+			],
+			rules: @valid_dir1.values
+		)
+		@valid_dir1_ctx = Rosace::Context.new(@valid_dir1_gen)
 		@text1 = Text.new("my first text")
 		@text1.set_location(:SimpleRule, 1, :attribute)
 		@text2 = Text.new("my second text")

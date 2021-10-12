@@ -13,42 +13,13 @@ class Rosace::Context
 
 	using Rosace::Refinements
 
-	# @ rules [Set<Class>]
-	# @ entities [Hash{Symbol => Hash{Integer => Entity}}]
-	# @ variables [Hash{Symbol => Object}]
-
-	# @return [Hash{Symbol => Function}] functions used in the expansion
-	#  language (frozen hash)
-	attr_reader :functions
+	# @return [Generator]
+	attr_reader :generator
 
 	# Creates a new context.
-	# @param [Enumerable<Function>] functions functions used in the expansion
-	#  language
-	# @param [Enumerable<Class>] rules set of rules
-	# @raise [TypeError] wrong type of parameters
-	# @raise [RuntimeError] rules or functions with the same name
-	def initialize(functions, rules)
-		Rosace::Utils.check_type(functions, Enumerable)
-		@functions = functions.each_with_object({}) do |function, hash|
-			Rosace::Utils.check_type(function, Rosace::Function)
-			if hash.has_key?(function.name)
-				raise "a function named #{function.name} already exists"
-			end
-			hash[function.name] = function
-		end.freeze
-		Rosace::Utils.check_type(rules, Enumerable)
-		@rules = Set[]
-		rules.each_with_index do |rule, i|
-			Rosace::Utils.check_type(rule, Class)
-			unless rule.ancestors.include?(Rosace::Entity)
-				raise TypeError,
-					"class of index #{i} in second argument is not a subclass" +
-					" of Rosace::Entity"
-			end
-			unless @rules.add?(rule)
-				raise "duplicated rule #{rule.rule_name}"
-			end
-		end
+	# @param generator [Generator]
+	def initialize(generator)
+		@generator = generator
 		self.reset
 	end
 
@@ -127,24 +98,6 @@ class Rosace::Context
 		@variables.size
 	end
 
-	# Return’s rule of given name.
-	# @param [#to_sym] name name of the rule
-	# @return [Class, nil] rule of given name (+nil+ if there is no rule of such
-	#  name)
-	# @raise [TypeError] wrong argument type
-	def rule(name)
-		@rules.find { |rule| rule.rule_name == Rosace::Utils.sym(name) }
-	end
-	
-	# Tests if rule of given name exists in the system.
-	# @param [#to_sym] name name of the rule
-	# @return [true, false] +true+ if rule of given name exists, +false+
-	#  otherwise
-	# @raise [TypeError] no implicit conversion of name into Symbol
-	def rule?(name)
-		@entities.key?(Rosace::Utils.sym(name))
-	end
-
 	# Tests if entity of given id exists in the rule.
 	# @param [#to_sym] rule name of the rule
 	# @param [#to_int] id id of the entity
@@ -212,7 +165,7 @@ class Rosace::Context
 		elsif @variables[name]
 			raise Rosace::EvaluationException,
 				"symbol #{name} already exists in the context"
-		elsif functions[name]
+		elsif generator.functions[name]
 			raise Rosace::EvaluationException,
 				"symbol #{name} is already the name of a function"
 		end
@@ -223,7 +176,7 @@ class Rosace::Context
 	# @return [self]
 	def reset
 		@variables = {}
-		@entities = @rules.each_with_object({}) do |rule, hash|
+		@entities = generator.rules.values.each_with_object({}) do |rule, hash|
 			hash[rule.rule_name] = rule.entities(self)
 		end
 		self

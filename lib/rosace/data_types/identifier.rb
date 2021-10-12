@@ -13,7 +13,7 @@ class Rosace::DataTypes::Identifier < Rosace::DataTypes::IntegerType
 			if value <= 0
 				messages << Rosace::ErrorMessage.new(
 					"id cannot be null or negative",
-					context.rule(rule_name),
+					context.generator.rules[rule_name],
 					context.entity(rule_name, entity_id),
 					attribute
 				)

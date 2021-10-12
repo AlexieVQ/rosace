@@ -9,10 +9,10 @@ class Rosace::Generator
 	# @return [String]
 	attr_reader :path
 
-	# @return [Enumerable<Function>]
+	# @return [Hash{Symbol => Function}]
 	attr_reader :functions
 
-	# @return [Enumerable<Class<Entity>>]
+	# @return [Hash{Symbol => Class<Entity>}]
 	attr_reader :rules
 	
 	# @param path [String]
@@ -22,32 +22,43 @@ class Rosace::Generator
 		path += path[-1] == '/' ? '' : '/'
 		@path = path.freeze
 		files = Dir.glob(@path + "*.csv")
-		@rules = files.map do |file|
+		@rules = files.each_with_object({}) do |file, hash|
 			rule = rules.find { |rule| rule.file == file }
 			unless rule
-				Class.new(Rosace::Entity) do
+				rule = Class.new(Rosace::Entity) do
 					self.file = file
 				end
 			end
+			hash[rule.rule_name] = rule
 		end.freeze
-		@functions = [
+		functions += [
 			Rosace::Function::S,
 			Rosace::Function::CAPITALIZE,
 			Rosace::Function::RAISE
-		] + functions
+		]
+		@functions = functions.each_with_object({}) do |function, hash|
+			hash[function.name] = function
+		end
 		@functions.freeze
 		# @type [Array<Message>]
 		@messages = []
-		rules.each do |rule|
-			begin
-				rule.send(:init_rule)
-			rescue => exception
-				@messages << Rosace::ErrorMessage.new(exception.message, rule)
+		@rules.values.each do |rule|
+			unless rule.initialized?
+				begin
+					rule.send(:init_rule)
+				rescue => exception
+					@messages << Rosace::ErrorMessage.new(
+						exception.message,
+						rule
+					)
+				end
 			end
 		end
-		context = Rosace::Context.new(@functions, @rules)
-		@messages = rules.reduce(@messages) do |messages, rule|
-			messages + rule.send(:verify, context)
+		unless failed?
+			context = Rosace::Context.new(self)
+			@messages = @rules.values.reduce(@messages) do |messages, rule|
+				messages + rule.send(:verify, context)
+			end
 		end
 	end
 
@@ -55,8 +66,13 @@ class Rosace::Generator
 		@messages.any? { |message| message.level == "ERROR" }
 	end
 
+	def print_messages(out: $stderr)
+		@messages.each { |message| out.puts message }
+		nil
+	end
+
 	def new_evaluation_context
-		Rosace::Context.new(functions, rules)
+		Rosace::Context.new(self)
 	end
 
 end

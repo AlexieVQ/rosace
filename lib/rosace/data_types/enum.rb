@@ -27,7 +27,7 @@ class Rosace::DataTypes::Enum < Rosace::DataTypes::DataType
 				messages << Rosace::ErrorMessage.new(
 					"invalid value \"#{value}\" (expected " +
 						"#{type.values.map { |v| v.id2name }.join(', ')})",
-					context.rule(rule_name),
+					context.generator.rules[rule_name],
 					context.entity(rule_name, entity_id),
 					attribute
 				)

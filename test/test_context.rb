@@ -41,9 +41,9 @@ class TestContext < Test::Unit::TestCase
 				enum :value, :value1, :value2, :value3
 			end
 		}
-		@rules.each_value { |rule| rule.send(:init_rule) }
-		@context = Rosace::Context.new(
-			[
+		@generator = Rosace::Generator.new(
+			path: TEST_DIR,
+			functions: [
 				Rosace::Function.new(:ret_arg, ->(arg) do
 					arg
 				end, :concurrent),
@@ -66,8 +66,10 @@ class TestContext < Test::Unit::TestCase
 					)
 				end, :sequential)
 			],
-			@rules.values
+			rules: @rules.values
 		)
+		@generator.print_messages
+		@context = Rosace::Context.new(@generator)
 		string1 = "string 1"
 		@context.tap do |t|
 			t.store_variable!(:var1, string1)
@@ -111,15 +113,6 @@ class TestContext < Test::Unit::TestCase
 
 	def test_invalid_variable
 		assert_raise(TypeError) { @context.variable(2) }
-	end
-
-	def test_rule?
-		assert_true(@context.rule?(:WeightedRule))
-		assert_false(@context.rule?(:ComplexRule))
-	end
-
-	def test_invalid_param_rule?
-		assert_raise(TypeError) { @context.rule?(3) }
 	end
 
 	def test_entity?
@@ -228,36 +221,6 @@ class TestContext < Test::Unit::TestCase
 		assert_nil(@context.variable(:var6))
 	end
 
-	def test_invalid_initialize
-		assert_raise(TypeError) { Rosace::Context.new(4, []) }
-		assert_raise(TypeError) { Rosace::Context.new({}, 8) }
-		assert_raise(TypeError) do
-			Rosace::Context.new({
-				7 => -> { 7 }
-			}, [])
-		end
-		assert_raise(TypeError) do
-			Rosace::Context.new({
-				fun: 7
-			}, [])
-		end
-		assert_raise(TypeError) do
-			Rosace::Context.new({
-				fun: proc { 7 }
-			}, [])
-		end
-		assert_raise(TypeError) { Rosace::Context.new({}, [7]) }
-		assert_raise(TypeError) do
-			Rosace::Context.new({}, [Integer])
-		end
-		assert_raise(RuntimeError) do
-			Rosace::Context.new(
-				{},
-				@rules.values + [@rules[:WeightedRule]]
-			)
-		end
-	end
-
 	def test_fork
 		fork1 = @context.clone
 		fork2 = @context.clone
@@ -297,30 +260,8 @@ class TestContext < Test::Unit::TestCase
 		assert_nil(fork1.variable(:var7))
 	end
 
-	def test_homonymous_functions
-		assert_raise do
-			Rosace::Context.new(
-				[
-					Rosace::Function.new(:f1, ->(p1, p2) do
-						Rosace::ContextualValue.new(
-							p1.value + p2.value,
-							p1.context
-						)
-					end, :sequential),
-					Rosace::Function.new(:f2, ->(p) { p }, :sequential),
-					Rosace::Function.new(
-						:f1,
-						->(p1, p2) { p1 },
-						:concurrent
-					)
-				],
-				@rules.values
-			)
-		end
-	end
-
 	def test_rule
-		assert_equal(@rules[:SimpleRule], @context.rule(:SimpleRule))
+		assert_equal(@rules[:SimpleRule], @context.generator.rules[:SimpleRule])
 	end
 
 	def test_entities

@@ -25,19 +25,19 @@ class Rosace::DataTypes::Reference < Rosace::DataTypes::IntegerType
 				messages << Rosace::ErrorMessage.new(
 					"required reference to rule #{type.target} cannot be" +
 						" null or negative",
-					context.rule(rule_name),
+					context.generator.rules[rule_name],
 					context.entity(rule_name, entity_id),
 					attribute
 				)
 			elsif @id != 0 &&
-				context.rule?(type.target) &&
+				context.generator.rules.key?(type.target) &&
 				context.entity(type.target, @id).nil?
 					message_class = type.type == :required ?
 						Rosace::ErrorMessage :
 						Rosace::WarningMessage
 					messages << message_class.new(
 						"no entity of id #{@id} in rule #{type.target}",
-						context.rule(rule_name),
+						context.generator.rules[rule_name],
 						context.entity(rule_name, entity_id),
 						attribute
 					)
@@ -108,7 +108,7 @@ class Rosace::DataTypes::Reference < Rosace::DataTypes::IntegerType
 	# @param [Symbol, nil] attribute concerned attribute
 	# @return [Array<Message>] generated messages
 	def verify(context, rule = nil, attribute = nil)
-		unless context.rule?(self.target)
+		unless context.generator.rules.key?(self.target)
 			[Rosace::ErrorMessage.new(
 				"no rule named #{self.target}",
 				rule,

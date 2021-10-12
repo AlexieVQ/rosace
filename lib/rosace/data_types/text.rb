@@ -30,7 +30,7 @@ class Rosace::DataTypes::Text < Rosace::DataTypes::DataType
 			if @failed_message
 				messages << Rosace::ErrorMessage.new(
 					@failed_message,
-					context.rule(rule_name),
+					context.generator.rules[rule_name],
 					context.entity(rule_name, entity_id),
 					attribute
 				)
