@@ -29,6 +29,7 @@ char			<- ',' / arg_char
 
 arg_char		<- !('\\' / ',' / '{' / '(' / ')' / '|') .
 				 / ~'\\' [\\,{}()|?]
+				 / "\n"
 
 arguments		<- ~'(' (arg_choice (~',' arg_choice)*)? ~')' { _.flatten }
 
