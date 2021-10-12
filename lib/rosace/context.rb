@@ -120,22 +120,6 @@ class Rosace::Context
 		@variables[Rosace::Utils.sym(name)]
 	end
 
-	# Returns stored value into variable of given name.
-	# Difference with {Context#[]} is that this method raises a
-	# EvaluationException if the context does not contains variable of given name.
-	# @param [#to_sym] name variable name
-	# @return [Object] value stored, or +nil+ if there is no variable of given
-	#  name
-	# @raise [TypeError] no implicit conversion of name into Symbol
-	# @raise [EvaluationException] no variable of given name
-	def fetch_variable(name)
-		unless self.variable?(name)
-			raise Rosace::EvaluationException,
-				"symbol #{name} does not exist in the context"
-		end
-		self.variable(name)
-	end
-
 	# Returns the number of variables stored in the context.
 	# Does not count rules and functions.
 	# @return [Integer] number of variables stored in the context
@@ -221,7 +205,7 @@ class Rosace::Context
 	# @raise [TypeError] no implicit conversion of +name+ into Symbol
 	# @raise [EvaluationException] variable of given name already
 	#  exists in the context
-	def store_variable(name, value)
+	def store_variable!(name, value)
 		name = Rosace::Utils.sym(name)
 		if name == :self
 			raise Rosace::EvaluationException, "symbol self is reserved"

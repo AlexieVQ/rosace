@@ -313,7 +313,7 @@ class TestDataTypes < Test::Unit::TestCase
 			*@floc,
 			"{my_var = s(arg1|arg2)}"
 		)
-		@valid_dir1_st.store_variable(:my_var, "my string")
+		@valid_dir1_st.store_variable!(:my_var, "my string")
 		assert_raise(Rosace::EvaluationException) do
 			my_text.value(@valid_dir1_st)
 		end

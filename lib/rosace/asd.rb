@@ -464,7 +464,7 @@ module Rosace::ASD
 
 		def eval(context)
 			unless operator == "||=" && context.variable?(symbol)
-				context.store_variable(symbol, expression.try_eval(context))
+				context.store_variable!(symbol, expression.try_eval(context))
 			end
 			super(context)
 		end
@@ -971,7 +971,7 @@ module Rosace::ASD
 
 		def eval(context)
 			assignment.try_eval(context)
-			context.fetch_variable(assignment.symbol)
+			context.variable(assignment.symbol)
 		end
 
 	end

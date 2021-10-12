@@ -70,12 +70,12 @@ class TestContext < Test::Unit::TestCase
 		)
 		string1 = "string 1"
 		@context.tap do |t|
-			t.store_variable(:var1, string1)
-			t.store_variable(:var2, 2)
-			t.store_variable(:var3, t.entity(:SimpleRule, 3))
-			t.store_variable(:var4, string1)
-			t.store_variable(:var5, "string 1")
-			t.store_variable(:var6, string1)
+			t.store_variable!(:var1, string1)
+			t.store_variable!(:var2, 2)
+			t.store_variable!(:var3, t.entity(:SimpleRule, 3))
+			t.store_variable!(:var4, string1)
+			t.store_variable!(:var5, "string 1")
+			t.store_variable!(:var6, string1)
 		end
 	end
 
@@ -111,22 +111,6 @@ class TestContext < Test::Unit::TestCase
 
 	def test_invalid_variable
 		assert_raise(TypeError) { @context.variable(2) }
-	end
-
-	def test_fetch_variable
-		assert_equal("string 1", @context.fetch_variable(:var1))
-		assert_equal(2, @context.fetch_variable(:var2))
-		assert_equal(
-			@context.entity(:SimpleRule, 3),
-			@context.fetch_variable(:var3)
-		)
-		assert_raise(Rosace::EvaluationException) do
-			@context.fetch_variable(:var8)
-		end
-	end
-
-	def test_invalid_fetch_variable
-		assert_raise(TypeError) { @context.fetch_variable(3) }
 	end
 
 	def test_rule?
@@ -215,45 +199,33 @@ class TestContext < Test::Unit::TestCase
 		assert_raise(TypeError) { @context.pick_entity(:SimpleRule, 3) }
 	end
 
-	def test_store_variable
-		@context.store_variable(:var8, 8)
+	def test_store_variable!
+		@context.store_variable!(:var8, 8)
 		assert_equal(8, @context.variable(:var8))
 		assert_raise(Rosace::EvaluationException) do
-			@context.store_variable(:var2, 4)
+			@context.store_variable!(:var2, 4)
 		end
 		assert_raise(Rosace::EvaluationException) do
-			@context.store_variable(:self, 8)
+			@context.store_variable!(:self, 8)
 		end
 		assert_raise(Rosace::EvaluationException) do
-			@context.store_variable(:add, 4)
+			@context.store_variable!(:add, 4)
 		end
 	end
 
 	def test_invalid_set
-		assert_raise(TypeError) { @context.store_variable(4, 7) }
+		assert_raise(TypeError) { @context.store_variable!(4, 7) }
 	end
 
 	def test_reset
 		@context.reset
 		assert_equal(0, @context.variables_number)
-		assert_raise(Rosace::EvaluationException) do
-			@context.fetch_variable(:var1)
-		end
-		assert_raise(Rosace::EvaluationException) do
-			@context.fetch_variable(:var2)
-		end
-		assert_raise(Rosace::EvaluationException) do
-			@context.fetch_variable(:var3)
-		end
-		assert_raise(Rosace::EvaluationException) do
-			@context.fetch_variable(:var4)
-		end
-		assert_raise(Rosace::EvaluationException) do
-			@context.fetch_variable(:var5)
-		end
-		assert_raise(Rosace::EvaluationException) do
-			@context.fetch_variable(:var6)
-		end
+		assert_nil(@context.variable(:var1))
+		assert_nil(@context.variable(:var2))
+		assert_nil(@context.variable(:var3))
+		assert_nil(@context.variable(:var4))
+		assert_nil(@context.variable(:var5))
+		assert_nil(@context.variable(:var6))
 	end
 
 	def test_invalid_initialize
@@ -316,8 +288,8 @@ class TestContext < Test::Unit::TestCase
 		assert_same(fork1.entity(:SimpleRule, 3), fork1.variable(:var3))
 		assert_not_same(@context.variable(:var3), fork1.variable(:var3))
 
-		fork1.store_variable(:var7, "string 2")
-		fork2.store_variable(:var7, "string 3")
+		fork1.store_variable!(:var7, "string 2")
+		fork2.store_variable!(:var7, "string 3")
 		assert_nil(@context.variable(:var7))
 		assert_equal("string 2", fork1.variable(:var7))
 		assert_equal("string 3", fork2.variable(:var7))
