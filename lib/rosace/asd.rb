@@ -597,7 +597,16 @@ module Rosace::ASD
 	end
 
 	# An expression, returning a value.
-	class Expression < Node; end
+	class Expression < Node
+		def try_eval(context)
+			out = super(context)
+			if out.nil?
+				raise Rosace::EvaluationException,
+					"nil value returned by #{self.to_s} expression"
+			end
+			out
+		end
+	end
 
 	# A method call on an expression
 	class MethodCall < Expression
@@ -726,7 +735,7 @@ module Rosace::ASD
 				context.restore_state(out.context)
 				out.value
 			else
-				context.fetch_variable(symbol)
+				context.variable(symbol)
 			end
 		end
 
@@ -918,13 +927,7 @@ module Rosace::ASD
 			entities = context.entities(symbol).select do |entity|
 				entity.pick?(*args)
 			end
-			entity = entities.pick
-			if entity.nil?
-				raise Rosace::EvaluationException,
-					"No #{symbol} entities matching given arguments " +
-					"(#{args.join(', ')})"
-			end
-			entity
+			entities.pick
 		end
 
 	end
