@@ -2,6 +2,7 @@ require_relative '../rosace'
 require_relative 'utils'
 require_relative 'contextual_value'
 require_relative 'refinements'
+require_relative 'evaluation_exception'
 
 # An object storing a function called in a entity.
 #
@@ -114,6 +115,11 @@ class Rosace::Function
 			string.value[0].upcase + string.value[1, string.value.length],
 			string.context
 		)
+	end, :sequential)
+
+	# A function that raises an {EvaluationException}.
+	RAISE = new(:raise, ->(message = Rosace::ContextualValue.empty) do
+		raise Rosace::EvaluationException, message.value
 	end, :sequential)
 
 end
