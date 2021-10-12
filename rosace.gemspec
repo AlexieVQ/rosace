@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
     "lib/rosace/data_types.rb",
     "lib/rosace/entity.rb",
     "lib/rosace/function.rb",
+    "lib/rosace/generator.rb",
     "lib/rosace/messages.rb",
     "lib/rosace/parser.rb",
     "lib/rosace/refinements.rb",

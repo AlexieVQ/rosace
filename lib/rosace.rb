@@ -6,6 +6,7 @@ require_relative "rosace/contextual_value"
 require_relative "rosace/entity"
 require_relative "rosace/function"
 require_relative "rosace/evaluation_exception"
+require_relative "rosace/generator"
 
 module Rosace
   class Error < StandardError; end
