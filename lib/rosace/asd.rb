@@ -545,6 +545,8 @@ module Rosace::ASD
 	# An expression, returning a value.
 	class Expression < Node
 
+		private
+
 		# Ensures that given value is not +nil+.
 		# @param value Value to check
 		# @return Given value
@@ -617,9 +619,11 @@ module Rosace::ASD
 		end
 
 		def eval(context)
+			puts "#{self} context = #{context.variables_number}"
 			outs = Rosace::ASD.eval_sequence([expression] + arguments, context)
 			expr_out = outs.first
 			args = outs[1, outs.length]
+			puts "#{self} context = #{context.variables_number}"
 			ensure_value(expr_out.send(symbol, *args))
 		end
 
