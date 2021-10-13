@@ -379,14 +379,14 @@ module Rosace::ASD
 			messages = super(context) + expression.verify(context)
 			if symbol == :self
 				messages << Rosace::ErrorMessage.new(
-					"self is a reserved keyword",
+					"\"self\" is a reserved keyword",
 					context.generator.rules[rule_name],
 					context.entity(rule_name, entity_id),
 					attribute
 				)
 			elsif context.generator.functions.key?(symbol)
 				messages << Rosace::ErrorMessage.new(
-					"#{symbol} is the name of a function",
+					"\"#{symbol}\" is the name of a function",
 					context.generator.rules[rule_name],
 					context.entity(rule_name, entity_id),
 					attribute
@@ -449,7 +449,7 @@ module Rosace::ASD
 			else
 				raise Rosace::EvaluationException,
 					"#{rule_name}[#{entity_id}]##{attribute}: No variable " +
-					"named #{symbol} in current context"
+					"named \"#{symbol}\" in current context"
 			end
 		end
 
@@ -526,7 +526,7 @@ module Rosace::ASD
 					receiver_out.instance_variable_defined?(variable)
 					raise Rosace::EvaluationException,
 						"#{rule_name}[#{entity_id}]##{attribute}: attribute " +
-						"#{symbol} already defined for object " +
+						"\"#{symbol}\" already defined for object " +
 						receiver_out.inspect
 				else
 					receiver_out.instance_variable_set(variable, result)
@@ -553,7 +553,7 @@ module Rosace::ASD
 			if value.nil?
 				raise Rosace::EvaluationException,
 					"#{rule_name}[#{entity_id}]##{attribute}: nil value " +
-					"returned by expression #{self}"
+					"returned by expression \"#{self}\""
 			end
 			value
 		end
@@ -657,8 +657,9 @@ module Rosace::ASD
 						Rosace::WarningMessage :
 						Rosace::ErrorMessage
 					messages << error_class.new(
-						"Wrong number of arguments for #{symbol} function " +
-							"(#{function.min_arity} expected, 0 given)",
+						"Wrong number of arguments for \"#{symbol}\" " +
+							"function (#{function.min_arity} expected, 0 " +
+							"given)",
 						context.generator.rules[rule_name],
 						context.entity(rule_name, entity_id),
 						attribute
@@ -718,7 +719,7 @@ module Rosace::ASD
 				f = context.generator.functions[symbol]
 				if arguments.length < f.min_arity
 					messages << Rosace::ErrorMessage.new(
-						"Too few arguments for function #{symbol} (" +
+						"Too few arguments for function \"#{symbol}\" (" +
 							"#{f.min_arity} expected, #{arguments.length} " +
 							"given)",
 						context.generator.rules[rule_name],
@@ -727,7 +728,7 @@ module Rosace::ASD
 					)
 				elsif arguments.length > f.max_arity
 					messages << Rosace::ErrorMessage.new(
-						"Too many arguments for function #{symbol} (" +
+						"Too many arguments for function \"#{symbol}\" (" +
 							"#{f.max_arity} expected, #{arguments.length} " +
 							"given)",
 						context.generator.rules[rule_name],
@@ -737,7 +738,7 @@ module Rosace::ASD
 				end
 			else
 				messages << Rosace::ErrorMessage.new(
-					"No function named #{symbol}",
+					"No function named \"#{symbol}\"",
 					context.generator.rules[rule_name],
 					context.entity(rule_name, entity_id),
 					attribute
@@ -818,7 +819,7 @@ module Rosace::ASD
 				max_arity = arity >= 0 ? arity : Float::INFINITY
 				if arguments.length < min_arity
 					messages << Rosace::ErrorMessage.new(
-						"Too few arguments for #{symbol} picker " +
+						"Too few arguments for \"#{symbol}\" picker " +
 							"(#{min_arity} expected, #{arguments.length} " +
 							"given)",
 						context.generator.rules[rule_name],
@@ -827,7 +828,7 @@ module Rosace::ASD
 					)
 				elsif arguments.length > max_arity
 					messages << Rosace::ErrorMessage.new(
-						"Too many arguments for #{symbol} picker " +
+						"Too many arguments for \"#{symbol}\" picker " +
 							"(#{max_arity} expected, #{arguments.length} " +
 							"given)",
 						context.generator.rules[rule_name],
@@ -837,7 +838,7 @@ module Rosace::ASD
 				end
 			else
 				messages << Rosace::ErrorMessage.new(
-					"No rule named #{symbol}",
+					"No rule named \"#{symbol}\"",
 					context.generator.rules[rule_name],
 					context.entity(rule_name, entity_id),
 					attribute
@@ -983,7 +984,7 @@ module Rosace::ASD
 			if context.generator.rules.key?(symbol)
 				unless context.entity?(symbol, id)
 					messages << Rosace::ErrorMessage.new(
-						"No entity of id #{id} in rule #{symbol}",
+						"No entity of id #{id} in rule \"#{symbol}\"",
 						context.generator.rules[rule_name],
 						context.entity(rule_name, entity_id),
 						attribute
@@ -991,7 +992,7 @@ module Rosace::ASD
 				end
 			else
 				messages << Rosace::ErrorMessage.new(
-					"No rule named #{symbol}",
+					"No rule named \"#{symbol}\"",
 					context.generator.rules[rule_name],
 					context.entity(rule_name, entity_id),
 					attribute
@@ -1065,9 +1066,9 @@ module Rosace::ASD
 	def expr_setter(chain, operator, expression)
 		unless chain[-1].arguments.empty?
 			raise Rattler::Runtime::SyntaxError,
-				"Unexpected argument list (#{chain[-1].arguments.map do |arg|
+				"Unexpected argument list \"(#{chain[-1].arguments.map do |arg|
 					arg.to_s
-				end.join(',')})"
+				end.join(',')})\""
 		end
 		AttrSetter.new(
 			chain_to_expression(chain[0, chain.length - 1]),
