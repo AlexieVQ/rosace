@@ -143,6 +143,7 @@ module Rosace::ASD
 				if list.empty?
 					raise e
 				else
+					context.log(e)
 					context.restore_state(saved_context)
 					retry
 				end
@@ -253,7 +254,8 @@ module Rosace::ASD
 			saved_context = context.clone
 			begin
 				rand(2) == 1 ? choice.eval(context) : ""
-			rescue Rosace::EvaluationException
+			rescue Rosace::EvaluationException => e
+				context.log(e)
 				context.restore_state(saved_context)
 				""
 			end
@@ -619,11 +621,9 @@ module Rosace::ASD
 		end
 
 		def eval(context)
-			puts "#{self} context = #{context.variables_number}"
 			outs = Rosace::ASD.eval_sequence([expression] + arguments, context)
 			expr_out = outs.first
 			args = outs[1, outs.length]
-			puts "#{self} context = #{context.variables_number}"
 			ensure_value(expr_out.send(symbol, *args))
 		end
 
@@ -1101,6 +1101,7 @@ module Rosace::ASD
 			end
 		rescue Rosace::EvaluationException => e
 			if attempts > 0 && !deterministic
+				context.log(e)
 				attempts -= 1
 				context.restore_state(saved_context)
 				retry

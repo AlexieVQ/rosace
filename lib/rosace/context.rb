@@ -1,3 +1,4 @@
+require "logger"
 require_relative '../rosace.rb'
 require_relative 'entity'
 require_relative 'evaluation_exception'
@@ -20,6 +21,7 @@ class Rosace::Context
 	# @param generator [Generator]
 	def initialize(generator)
 		@generator = generator
+		@logger = Logger.new($stdout)
 		self.reset
 	end
 
@@ -180,6 +182,11 @@ class Rosace::Context
 			hash[rule.rule_name] = rule.entities(self)
 		end
 		self
+	end
+
+	# @param exception [EvaluationException]
+	def log(exception)
+		@logger.info(exception.message)
 	end
 
 end
