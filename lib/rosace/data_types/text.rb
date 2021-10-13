@@ -54,7 +54,7 @@ class Rosace::DataTypes::Text < Rosace::DataTypes::DataType
 			begin
 				# @type [String] Last evaluation, in case of failure if the
 				#  method is called again
-				@last_eval = @ast.try_eval(context)
+				@last_eval = @ast.eval(context)
 			rescue Rosace::EvaluationException => e
 				context.restore_state(saved_context)
 				if @last_eval

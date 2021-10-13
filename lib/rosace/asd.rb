@@ -33,6 +33,8 @@ require_relative 'refinements'
 # @private
 module Rosace::ASD
 
+	MAX_ATTEMPTS = 5
+
 	using Rosace::Refinements
 
 	# A node of the syntactic tree.
@@ -75,27 +77,6 @@ module Rosace::ASD
 			true
 		end
 
-		# Expands this node, retry if a {EvaluationException} has been thrown during
-		# evaluation.
-		# @param context [Context] expansion context
-		# @return Evaluation result
-		# @raise [EvaluationException] Exception that has not been resolved
-		def try_eval(context)
-			attempts = 5
-			saved_context = context.clone
-			begin
-				eval(context)
-			rescue Rosace::EvaluationException => e
-				if self.deterministic? || attempts == 0
-					raise e
-				else
-					attempts -= 1
-					context.restore_state(saved_context)
-					retry
-				end
-			end
-		end
-
 		# @return [String] Code representation of this node
 		def to_s
 			super
@@ -104,8 +85,6 @@ module Rosace::ASD
 		def ==(o)
 			self.class == o.class
 		end
-
-		private
 
 		# Expands this node.
 		# @param [Context] context expansion context
@@ -119,17 +98,6 @@ module Rosace::ASD
 
 	# Part of a {Variant}.
 	class Part < Node
-
-		# Expands this node, retry if a {EvaluationException} has been thrown during
-		# evaluation.
-		# @param context [Context] expansion context
-		# @return [String] output String
-		# @raise [EvaluationException] Exception that has not been resolved
-		def try_eval(context)
-			super(context)
-		end
-
-		private
 
 		# Expands this node.
 		# @param [Context] context expansion context
@@ -165,13 +133,12 @@ module Rosace::ASD
 			end
 		end
 
-		def try_eval(context)
+		def eval(context)
 			list = variants.sort { |v1, v2| 1 - 2 * rand(2) }
 			saved_context = context.clone
 			begin
 				# @type [Variant]
-				@variant = list.pop
-				eval(context)
+				list.pop.eval(context)
 			rescue Rosace::EvaluationException => e
 				if list.empty?
 					raise e
@@ -192,12 +159,6 @@ module Rosace::ASD
 
 		def ==(o)
 			super(o) && self.variants == o.variants
-		end
-
-		private
-
-		def eval(context)
-			@variant.try_eval(context)
 		end
 
 	end
@@ -244,16 +205,12 @@ module Rosace::ASD
 			super(o) && self.parts == o.parts
 		end
 
-		private
-
 		# Expands this node.
 		# @param [Context] context expansion context
 		# @return [String] output String
 		# @raise [EvaluationException] exception during expansion
 		def eval(context)
-			parts.reduce("") do |out, part|
-				out + part.try_eval(context)
-			end
+			Rosace::ASD.eval_sequence(parts, context).join("")
 		end
 
 	end
@@ -292,21 +249,16 @@ module Rosace::ASD
 			choice.deterministic?
 		end
 
-		def try_eval(context)
+		def eval(context)
 			saved_context = context.clone
 			begin
-				eval(context)
+				rand(2) == 1 ? choice.eval(context) : ""
 			rescue Rosace::EvaluationException
 				context.restore_state(saved_context)
 				""
 			end
 		end
 
-		private
-
-		def eval(context)
-			rand(2) == 1 ? choice.try_eval(context) : ""
-		end
 	end
 
 	# A simple text without expansion node.
@@ -332,8 +284,6 @@ module Rosace::ASD
 		def ==(o)
 			super(o) && self.text == o.text
 		end
-
-		private
 
 		def eval(context)
 			text.clone
@@ -378,12 +328,12 @@ module Rosace::ASD
 			super(o) && self.expression == o.expression
 		end
 
-		private
-
 		def eval(context)
-			out = expression.try_eval(context)
+			out = expression.eval(context)
 			eval_value(out, context)
 		end
+
+		private
 
 		def eval_value(value, context)
 			if value.respond_to?(:to_str)
@@ -460,11 +410,9 @@ module Rosace::ASD
 			expression.deterministic?
 		end
 
-		private
-
 		def eval(context)
 			unless operator == "||=" && context.variable?(symbol)
-				context.store_variable!(symbol, expression.try_eval(context))
+				context.store_variable!(symbol, expression.eval(context))
 			end
 			super(context)
 		end
@@ -495,14 +443,13 @@ module Rosace::ASD
 			super(o) && self.symbol == o.symbol
 		end
 
-		private
-
 		def eval(context)
 			if context.variable?(symbol)
 				super(context)
 			else
 				raise Rosace::EvaluationException,
-					"No variable named #{symbol} in current context"
+					"#{rule_name}[#{entity_id}]##{attribute}: No variable " +
+					"named #{symbol} in current context"
 			end
 		end
 
@@ -565,22 +512,21 @@ module Rosace::ASD
 			receiver.deterministic? && value.deterministic?
 		end
 
-		private
-
 		def eval(context)
-			receiver_out = receiver.try_eval(context)
+			receiver_out = receiver.eval(context)
 			setter = "#{symbol.id2name}=".to_sym
 			variable = "@#{symbol.id2name}".to_sym
 			unless operator == "||=" &&
 				receiver_out.respond_to?(symbol) &&
 				receiver_out.send(symbol)
-				@result = value.try_eval(context)
+				@result = value.eval(context)
 				if receiver_out.respond_to?(setter)
 					receiver_out.send(setter, result)
 				elsif receiver_out.respond_to?(symbol) ||
 					receiver_out.instance_variable_defined?(variable)
 					raise Rosace::EvaluationException,
-						"attribute #{symbol} already defined for object " +
+						"#{rule_name}[#{entity_id}]##{attribute}: attribute " +
+						"#{symbol} already defined for object " +
 						receiver_out.inspect
 				else
 					receiver_out.instance_variable_set(variable, result)
@@ -598,13 +544,18 @@ module Rosace::ASD
 
 	# An expression, returning a value.
 	class Expression < Node
-		def try_eval(context)
-			out = super(context)
-			if out.nil?
+
+		# Ensures that given value is not +nil+.
+		# @param value Value to check
+		# @return Given value
+		# @raise [EvaluationException] Given value is +nil+
+		def ensure_value(value)
+			if value.nil?
 				raise Rosace::EvaluationException,
-					"nil value returned by #{self.to_s} expression"
+					"#{rule_name}[#{entity_id}]##{attribute}: nil value " +
+					"returned by expression #{self}"
 			end
-			out
+			value
 		end
 	end
 
@@ -665,12 +616,11 @@ module Rosace::ASD
 			false
 		end
 
-		private
-
 		def eval(context)
-			expr_out = expression.try_eval(context)
-			args = arguments.map { |arg| arg.try_eval(context) }
-			expr_out.send(symbol, *args)
+			outs = Rosace::ASD.eval_sequence([expression] + arguments, context)
+			expr_out = outs.first
+			args = outs[1, outs.length]
+			ensure_value(expr_out.send(symbol, *args))
 		end
 
 	end
@@ -724,10 +674,8 @@ module Rosace::ASD
 			super(o) && self.symbol == o.symbol
 		end
 
-		private
-
 		def eval(context)
-			if symbol == :self
+			ensure_value(if symbol == :self
 				context.entity(rule_name, entity_id)
 			elsif context.generator.functions.key?(symbol)
 				out = context.generator.functions[symbol].
@@ -736,7 +684,7 @@ module Rosace::ASD
 				out.value
 			else
 				context.variable(symbol)
-			end
+			end)
 		end
 
 	end
@@ -818,20 +766,22 @@ module Rosace::ASD
 			false
 		end
 
-		private
-
 		def eval(context)
 			f = context.generator.functions[symbol]
-			args = arguments.map do |arg|
-				arg_context = f.type == :concurrent ? context.clone : context
-				Rosace::ContextualValue.new(
-					arg.try_eval(arg_context),
-					arg_context
-				)
-			end
+			args = f.type == :sequential ?
+				Rosace::ASD.eval_sequence(arguments, context).map do |arg|
+					Rosace::ContextualValue.new(arg, context)
+				end :
+				arguments.map do |arg|
+					arg_context = context.clone
+					Rosace::ContextualValue.new(
+						arg.eval(arg_context),
+						arg_context
+					)
+				end
 			out = f.call(*args)
 			context.restore_state(out.context)
-			out.value
+			ensure_value(out.value)
 		end
 
 	end
@@ -916,18 +866,13 @@ module Rosace::ASD
 			false
 		end
 
-		private
-
 		# Picks an entity from rule {#rule}.
 		# @param context [Context] evaluation context
 		# @return [Entity] picked entity
 		# @raise [EvaluationException] No entities matching given {#arguments}
 		def eval(context)
-			args = arguments.map { |arg| arg.try_eval(context) }
-			entities = context.entities(symbol).select do |entity|
-				entity.pick?(*args)
-			end
-			entities.pick
+			args = Rosace::ASD.eval_sequence(arguments, context)
+			ensure_value(context.pick_entity(symbol, *args))
 		end
 
 	end
@@ -967,11 +912,9 @@ module Rosace::ASD
 			assignment.deterministic?
 		end
 
-		private
-
 		def eval(context)
-			assignment.try_eval(context)
-			context.variable(assignment.symbol)
+			assignment.eval(context)
+			ensure_value(context.variable(assignment.symbol))
 		end
 
 	end
@@ -1011,11 +954,9 @@ module Rosace::ASD
 			setter.deterministic?
 		end
 
-		private
-
 		def eval(context)
-			setter.try_eval(context)
-			setter.result
+			setter.eval(context)
+			ensure_value(setter.result)
 		end
 		
 	end
@@ -1071,13 +1012,11 @@ module Rosace::ASD
 			true
 		end
 
-		private
-
 		# Returns referenced entity.
 		# @param context [Context] evaluation context
 		# @return [Entity] referenced entity
 		def eval(context)
-			context.entity(symbol, id)
+			ensure_value(context.entity(symbol, id))
 		end
 
 	end
@@ -1136,6 +1075,34 @@ module Rosace::ASD
 			operator,
 			expression
 		)
+	end
+
+	# Evaluate a sequence of nodes. Retries {MAX_ATTEMPTS} times if an
+	#  {EvaluationException} happens and one of the node is non-deterministic.
+	# @param nodes [Array<Node>] Sequence of nodes to evaluate
+	# @param context [Context] Evaluation context
+	# @return [Array] Results of nodes evaluation
+	# @raise [EvaluationException] unrescued exception
+	def self.eval_sequence(nodes, context)
+		attempts = MAX_ATTEMPTS
+		saved_context = context.clone
+		deterministic = true
+		begin
+			deterministic = true
+			nodes.map do |node|
+				out = node.eval(context)
+				deterministic &&= node.deterministic?
+				out
+			end
+		rescue Rosace::EvaluationException => e
+			if attempts > 0 && !deterministic
+				attempts -= 1
+				context.restore_state(saved_context)
+				retry
+			else
+				raise e
+			end
+		end
 	end
 
 end

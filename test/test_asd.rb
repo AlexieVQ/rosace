@@ -118,8 +118,8 @@ class TestASD < Test::Unit::TestCase
 	end
 
 	def test_eval1
-		assert_equal("my second text", @variant2.try_eval(@valid_dir1_ctx))
-		assert_empty(@predicate1.try_eval(@valid_dir1_ctx))
+		assert_equal("my second text", @variant2.eval(@valid_dir1_ctx))
+		assert_empty(@predicate1.eval(@valid_dir1_ctx))
 	end
 
 	def test_eval2
@@ -129,7 +129,7 @@ class TestASD < Test::Unit::TestCase
 				Choice.new([
 					Variant.new([@print1]),
 					Variant.new([@text1])
-				]).try_eval(@valid_dir1_ctx)
+				]).eval(@valid_dir1_ctx)
 			)
 		end
 	end
@@ -138,13 +138,13 @@ class TestASD < Test::Unit::TestCase
 		assert_raise(Rosace::EvaluationException) do
 			Choice.new([
 				Variant.new([@print1])
-			]).try_eval(@valid_dir1_ctx)
+			]).eval(@valid_dir1_ctx)
 		end
 	end
 	
 	def test_eval2c
 		assert_raise(Rosace::EvaluationException) do
-			@predicate1.try_eval(@valid_dir1_ctx)
+			@predicate1.eval(@valid_dir1_ctx)
 		end
 	end
 
@@ -155,14 +155,14 @@ class TestASD < Test::Unit::TestCase
 				@ref1,
 				:my_text,
 				[]
-			)).try_eval(@valid_dir1_ctx)
+			)).eval(@valid_dir1_ctx)
 		)
 	end
 
 	def test_eval3b
 		assert_equal(
 			"simple entity 2",
-			Print.new(@ref1).try_eval(@valid_dir1_ctx)
+			Print.new(@ref1).eval(@valid_dir1_ctx)
 		)
 	end
 
@@ -173,21 +173,21 @@ class TestASD < Test::Unit::TestCase
 				@ref1,
 				:id,
 				[]
-			)).try_eval(@valid_dir1_ctx)
+			)).eval(@valid_dir1_ctx)
 		)
 	end
 
 	def test_eval3d
 		assert_equal(
 			"my first text1",
-			Print.new(@method1).try_eval(@valid_dir1_ctx)
+			Print.new(@method1).eval(@valid_dir1_ctx)
 		)
 	end
 
 	def test_eval3e
 		assert_equal(
 			"my second text",
-			AssignmentExpr.new(@assignment1).try_eval(@valid_dir1_ctx)
+			AssignmentExpr.new(@assignment1).eval(@valid_dir1_ctx)
 		)
 	end
 
@@ -195,25 +195,25 @@ class TestASD < Test::Unit::TestCase
 		10.times do
 			assert_not_include(
 				[3, 4],
-				@picker.try_eval(@valid_dir1_ctx).id
+				@picker.eval(@valid_dir1_ctx).id
 			)
 		end
 		assert_raise(Rosace::EvaluationException) do
 			Picker.new(
 				:WeightedRule,
 				[Text.new("20")]
-			).try_eval(@valid_dir1_ctx)
+			).eval(@valid_dir1_ctx)
 		end
 	end
 
 	def test_eval5
 		10.times do
-			assert_equal("", @optional1.try_eval(@valid_dir1_ctx))
+			assert_equal("", @optional1.eval(@valid_dir1_ctx))
 		end
 		outs = []
-		@assignment1.try_eval(@valid_dir1_ctx)
+		@assignment1.eval(@valid_dir1_ctx)
 		100.times do
-			outs << @optional1.try_eval(@valid_dir1_ctx)
+			outs << @optional1.eval(@valid_dir1_ctx)
 		end
 		assert_include(outs, "")
 		assert_include(outs, "my second text")
@@ -222,47 +222,47 @@ class TestASD < Test::Unit::TestCase
 	def test_eval6
 		assert_equal(
 			"",
-			SymbolReading.new(:s).try_eval(@valid_dir1_ctx)
+			SymbolReading.new(:s).eval(@valid_dir1_ctx)
 		)
 		assert_equal(
 			@valid_dir1_ctx.entity(:SimpleRule, 2),
 			SymbolReading.new(:self).tap do |sr|
 				sr.set_location(:SimpleRule, 2, :value)
-			end.try_eval(@valid_dir1_ctx)
+			end.eval(@valid_dir1_ctx)
 		)
 	end
 
 	def test_eval7
-		@setter1.try_eval(@valid_dir1_ctx)
+		@setter1.eval(@valid_dir1_ctx)
 		assert_equal(
 			"my second text",
 			@valid_dir1_ctx.entity(:SimpleRule, 2).my_attr
 		)
-		@setter2.try_eval(@valid_dir1_ctx)
+		@setter2.eval(@valid_dir1_ctx)
 		assert_equal(
 			"my second text",
 			@valid_dir1_ctx.entity(:SimpleRule, 2).attr2
 		)
 		assert_false(@valid_dir1_ctx.entity(:SimpleRule, 1).respond_to?(:attr2))
 		assert_raise(Rosace::EvaluationException) do
-			@setter2.try_eval(@valid_dir1_ctx)
+			@setter2.eval(@valid_dir1_ctx)
 		end
 	end
 
 	def test_eval7c
-		assert_equal("my second text", @setter_expr.try_eval(@valid_dir1_ctx))
+		assert_equal("my second text", @setter_expr.eval(@valid_dir1_ctx))
 	end
 
 	def test_eval8
-		@assignment1.try_eval(@valid_dir1_ctx)
+		@assignment1.eval(@valid_dir1_ctx)
 		assert_equal("my second text", @valid_dir1_ctx.variable(:var1))
-		@assignment2.try_eval(@valid_dir1_ctx)
+		@assignment2.eval(@valid_dir1_ctx)
 		assert_equal("my second text", @valid_dir1_ctx.variable(:var1))
 	end
 
 	def test_eval9
-		@setter1.try_eval(@valid_dir1_ctx)
-		@setter3.try_eval(@valid_dir1_ctx)
+		@setter1.eval(@valid_dir1_ctx)
+		@setter3.eval(@valid_dir1_ctx)
 		assert_equal(
 			"my second text",
 			@valid_dir1_ctx.entity(:SimpleRule, 2).my_attr
