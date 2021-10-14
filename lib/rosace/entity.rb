@@ -438,25 +438,17 @@ class Rosace::Entity
 
 	# Returns a map associating entities' ids to their value.
 	# The Entity objects returned are newly-initalized objects.
-	# @param [Context, nil] context context where these entities
-	#  are stored
+	# @param [Context] context context where these entities are stored
 	# @return [Hash{Integer => Entity}] entities stored by id
 	# @raise [TypeError] wrong type of arguments
 	# @raise [RuntimeError] called on Entity, or class not initialized
-	def self.entities(context = nil)
+	def self.entities(context)
+		Rosace::Utils.check_type(context, Rosace::Context)
 		self.require_initialized_rule
 		@entities.each_with_object({}) do |entity, hash|
+			entity.instance_variable_set(:@context, context)
 			hash[entity.id] = entity.dup
-			if context
-				Rosace::Utils.check_type(
-					context,
-					Rosace::Context
-				)
-				hash[entity.id].instance_variable_set(
-					:@context,
-					context
-				)
-			end
+			entity.remove_instance_variable(:@context)
 		end
 	end
 	
@@ -609,16 +601,18 @@ class Rosace::Entity
 			singleton_methods.each do |symbol|
 				singleton_class.remove_method(symbol)
 			end
+			if source.instance_variable_defined?(:@context)
+				@context = source.instance_variable_get(:@context)
+			end
+			if source.instance_variable_defined?(:@attributes)
+				@attributes = source.instance_variable_get(:@attributes).
+					each_with_object({}) do |(name, data), dest|
+						dest[name] = data.clone
+					end.freeze
+			end
 			source.instance_variables.each do |symbol|
 				src_var = source.instance_variable_get(symbol)
-				if symbol == :@context
-					@context = src_var
-				elsif symbol == :@attributes
-					@attributes = source.instance_variable_get(:@attributes).
-						each_with_object({}) do |(name, data), dest|
-							dest[name] = data.clone
-						end.freeze
-				else
+				unless [:@context, :@attributes].include?(symbol)
 					same_var = source.instance_variables.find do |src_sym|
 						source.instance_variable_get(src_sym).equal?(src_var) &&
 							instance_variables.any? do |self_sym|
