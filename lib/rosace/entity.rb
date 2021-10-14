@@ -626,7 +626,7 @@ class Rosace::Entity
 							end
 					end
 					if src_var.kind_of?(Rosace::Entity)
-						instance_variable_set(symbol, context.entity(
+						instance_variable_set(symbol, @context.entity(
 							src_var.rule.rule_name,
 							src_var.id
 						))
