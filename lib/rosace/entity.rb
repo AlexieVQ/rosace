@@ -496,7 +496,7 @@ class Rosace::Entity
 		end
 		@attributes.freeze
 		methods.each do |symbol, method|
-			define_singleton_method(symbol, method)
+			define_singleton_method(symbol, method.bind(self))
 		end
 		init
 	end
@@ -598,9 +598,6 @@ class Rosace::Entity
 			instance_variables.each do |symbol|
 				remove_instance_variable(symbol)
 			end
-			singleton_methods.each do |symbol|
-				singleton_class.remove_method(symbol)
-			end
 			if source.instance_variable_defined?(:@context)
 				@context = source.instance_variable_get(:@context)
 			end
@@ -633,12 +630,6 @@ class Rosace::Entity
 						instance_variable_set(symbol, src_var.clone)
 					end
 				end
-			end
-			source.singleton_methods.each do |symbol|
-				define_singleton_method(
-					symbol,
-					source.singleton_method(symbol).to_proc
-				)
 			end
 		end
 		self
