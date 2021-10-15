@@ -447,7 +447,7 @@ class Rosace::Entity
 		self.require_initialized_rule
 		@entities.each_with_object({}) do |entity, hash|
 			entity.instance_variable_set(:@context, context)
-			hash[entity.id] = entity.dup
+			hash[entity.id] = entity.clone
 			entity.remove_instance_variable(:@context)
 		end
 	end
