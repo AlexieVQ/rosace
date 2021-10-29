@@ -340,12 +340,12 @@ class TestEntity < Test::Unit::TestCase
 
 	def test_entities
 		@valid_dir1.each_value do |rule|
-			rule.entities.each do |id, entity|
+			rule.entities(@valid_dir1_st).each do |id, entity|
 				assert_equal(id, entity.id)
-				assert_equal(entity, @valid_dir1[rule.rule_name].entities[id])
+				assert_equal(entity, @valid_dir1[rule.rule_name].entities(@valid_dir1_st)[id])
 				assert_not_same(
 					entity,
-					@valid_dir1[rule.rule_name].entities[id]
+					@valid_dir1[rule.rule_name].entities(@valid_dir1_st)[id]
 				)
 			end
 		end

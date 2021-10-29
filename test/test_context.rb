@@ -132,7 +132,7 @@ class TestContext < Test::Unit::TestCase
 
 	def test_entity
 		assert_equal(
-			@rules[:SimpleRule].entities[3],
+			@rules[:SimpleRule].entities(@context)[3],
 			@context.entity(:SimpleRule, 3)
 		)
 		assert_nil(@context.entity(:SimpleRule, 11))
@@ -145,7 +145,7 @@ class TestContext < Test::Unit::TestCase
 	end
 
 	def pick_test(rule, args, draw_nb)
-		enum_draws = @rules[rule].entities.values.
+		enum_draws = @rules[rule].entities(@context).values.
 			each_with_object({}) do |element, hash|
 			hash[element] = 0
 		end
@@ -165,7 +165,7 @@ class TestContext < Test::Unit::TestCase
 		deviations = Array.new(@rules[rule].length) do |i|
 			Math.sqrt(draw_nb.to_f * enum_means[i] * (1.0 - enum_means[i]))
 		end
-		@rules[rule].entities.keys.each_with_index do |element, i|
+		@rules[rule].entities(@context).keys.each_with_index do |element, i|
 			assert_in_delta(
 				enum_means[i],
 				enum_draws[element].to_f / draw_nb,
@@ -180,7 +180,7 @@ class TestContext < Test::Unit::TestCase
 		pick_test(:WeightedRule, [""], draw_nb)
 		pick_test(:SimpleRule, ["2"], draw_nb)
 		assert_equal(
-			@rules[:SimpleRule].entities[1],
+			@rules[:SimpleRule].entities(@context)[1],
 			@context.pick_entity(:SimpleRule, "1")
 		)
 		assert_nil(@context.pick_entity(:SimpleRule, "0"))
@@ -247,7 +247,7 @@ class TestContext < Test::Unit::TestCase
 		assert_same(fork1.variable(:var1), fork1.variable(:var4))
 		assert_not_same(fork1.variable(:var1), fork1.variable(:var5))
 		assert_same(fork1.variable(:var1), fork1.variable(:var6))
-		assert_equal(@rules[:SimpleRule].entities[3], fork1.variable(:var3))
+		assert_equal(@rules[:SimpleRule].entities(@context)[3], fork1.variable(:var3))
 		assert_same(fork1.entity(:SimpleRule, 3), fork1.variable(:var3))
 		assert_not_same(@context.variable(:var3), fork1.variable(:var3))
 
@@ -266,7 +266,7 @@ class TestContext < Test::Unit::TestCase
 
 	def test_entities
 		assert_equal(
-			@rules[:SimpleRule].send(:entities).values,
+			@rules[:SimpleRule].send(:entities, @context).values,
 			@context.entities(:SimpleRule)
 		)
 	end
