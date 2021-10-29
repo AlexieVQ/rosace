@@ -46,8 +46,8 @@ module Rosace::Refinements
 
 	end
 
-	refine Enumerable do
-		
+	refine Array do
+
 		# Returns the sum of the attributes +weight+ of all elements of the
 		# enumerable.
 		# For elements that does not have a +weight+ attribute, their weight is
