@@ -48,22 +48,6 @@ module Rosace::Refinements
 
 	refine Array do
 
-		# Returns the sum of the attributes +weight+ of all elements of the
-		# enumerable.
-		# For elements that does not have a +weight+ attribute, their weight is
-		# 1.
-		# Any negative weight is considered null.
-		# @return [Integer] total weight of the elements of the enumerable
-		def total_weight
-			self.inject(0) do |sum, element|
-				begin
-					sum + [element.weight, 0].max
-				rescue NoMethodError
-					sum + 1
-				end
-			end
-		end
-
 		# Pick randomly an element of the enumerable.
 		# The random choice is weighted by the +weight+ attribute of the
 		# elements. If an element does not have a +weight+ attribute, its weight
@@ -73,15 +57,17 @@ module Rosace::Refinements
 		#  enumerable is empty or does not have any attribute with a non-null
 		#  weight
 		def pick
-			total_weight = self.total_weight
+			total_weight = 0
+			# @type [Array<(Object, Integer)>]
+			array = self.map do |element|
+				weight = element.respond_to?(:weight) ? element.weight : 1
+				total_weight += weight
+				[element, weight]
+			end
 			return nil if total_weight == 0
 			n = rand(total_weight)
-			self.each do |element|
-				n -= begin
-					[element.weight, 0].max
-				rescue NoMethodError
-					1
-				end
+			array.each do |element, weight|
+				n -= weight
 				return element if n < 0
 			end
 		end

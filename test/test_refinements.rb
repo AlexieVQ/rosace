@@ -107,13 +107,6 @@ class TestRefinements < Test::Unit::TestCase
 		assert_false('Abc_Def.csv'.valid_csv_file_name?)
 	end
 
-	def test_total_weight
-		assert_equal(0, [].total_weight)
-		assert_equal(@weighted_objects_sum, @weighted_objects.total_weight)
-		assert_equal(@integers_sum, @integers.total_weight)
-		assert_equal(@mixed_objects_sum, @mixed_objects.total_weight)
-	end
-
 	def pick_test(enum, draw_nb, enum_means)
 		enum_draws = enum.each_with_object({}) do |element, hash|
 			hash[element] = 0
