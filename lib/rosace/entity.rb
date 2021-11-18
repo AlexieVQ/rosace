@@ -335,7 +335,7 @@ class Rosace::Entity
 		@relations.each do |name, relation|
 			sym = "#{name}_list"
 			define_method(sym) do
-				self.context.entities(relation[:foreign_rule]).
+				self.context.send(:entities, relation[:foreign_rule]).
 					select do |entity|
 					entity.send(relation[:foreign_attribute]) == self
 				end
@@ -450,6 +450,14 @@ class Rosace::Entity
 			hash[entity.id] = entity.clone
 			entity.remove_instance_variable(:@context)
 		end
+	end
+
+	# Returns a list of entities' ids.
+	# @return [Array<Integer>] All entities' ids.
+	# @raise [RuntimeError] called on Entity, or class not initialized
+	def self.ids
+		self.require_initialized_rule
+		@entities.map { |entity| entity.id }
 	end
 	
 	# Raises RuntimeError if current class is Entity, or if the rule is

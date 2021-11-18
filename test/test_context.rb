@@ -81,10 +81,6 @@ class TestContext < Test::Unit::TestCase
 		end
 	end
 
-	def test_variables
-		assert_equal(6, @context.variables_number)
-	end
-
 	def test_variable?
 		assert_true(@context.variable? :var1)
 		assert_true(@context.variable? :var4)
@@ -212,7 +208,6 @@ class TestContext < Test::Unit::TestCase
 
 	def test_reset
 		@context.reset
-		assert_equal(0, @context.variables_number)
 		assert_nil(@context.variable(:var1))
 		assert_nil(@context.variable(:var2))
 		assert_nil(@context.variable(:var3))
@@ -262,13 +257,6 @@ class TestContext < Test::Unit::TestCase
 
 	def test_rule
 		assert_equal(@rules[:SimpleRule], @context.generator.rules[:SimpleRule])
-	end
-
-	def test_entities
-		assert_equal(
-			@rules[:SimpleRule].send(:entities, @context).values,
-			@context.entities(:SimpleRule)
-		)
 	end
 
 end

@@ -19,9 +19,14 @@ class Rosace::Context
 
 	# Creates a new context.
 	# @param generator [Generator]
-	def initialize(generator)
+	# @param parent [Context, nil] Parent context
+	# @param read_only [Boolean] true if no modification are allowed on the
+	#  parent context
+	def initialize(generator, parent: nil, read_only: false)
 		@generator = generator
 		@logger = Logger.new($stdout)
+		@parent = parent
+		@read_only = read_only
 		self.reset
 	end
 
@@ -62,9 +67,8 @@ class Rosace::Context
 					variables[var2].equal?(variables[var]) && hash.key?(var2)
 				end
 				if variables[var].kind_of?(Rosace::Entity)
-					hash[var] = @entities[
-						variables[var].rule.rule_name
-					][variables[var].id]
+					hash[var] = entity(variables[var].rule.rule_name,
+							variables[var].id)
 				elsif same_var
 					hash[var] = hash[same_var]
 				else
@@ -81,7 +85,8 @@ class Rosace::Context
 	#  otherwise
 	# @raise [TypeError] no implicit conversion of name into Symbol
 	def variable?(name)
-		@variables.key?(Rosace::Utils.sym(name))
+		@variables.key?(Rosace::Utils.sym(name)) ||
+				!parent.nil? && parent.variable?(name)
 	end
 
 	# Returns stored value into variable of given name.
@@ -90,14 +95,24 @@ class Rosace::Context
 	#  given name
 	# @raise [TypeError] no implicit conversion of name into Symbol
 	def variable(name)
-		@variables[Rosace::Utils.sym(name)]
-	end
-
-	# Returns the number of variables stored in the context.
-	# Does not count rules and functions.
-	# @return [Integer] number of variables stored in the context
-	def variables_number
-		@variables.size
+		name = Rosace::Utils.sym(name)
+		val = @variables[name]
+		if !val.nil?
+			val
+		elsif !parent
+			nil
+		else
+			val = parent.variable(name)
+			if !val.nil?
+				if val.is_a(Rosace::Entity)
+					val = entity(val.rule.rule_name, val.id)
+				elsif read_only?
+					val = val.clone
+					@variables[name] = val
+				end
+			end
+			val
+		end
 	end
 
 	# Tests if entity of given id exists in the rule.
@@ -109,7 +124,8 @@ class Rosace::Context
 	def entity?(rule, id)
 		rule = Rosace::Utils.sym(rule)
 		id = Rosace::Utils.int(id)
-		@entities.key?(rule) && @entities[rule].key?(id)
+		@entities.key?(rule) && @entities[rule].key?(id) ||
+				!parent.nil? && parent.entity?(rule, id)
 	end
 
 	# Get entity of given id
@@ -121,15 +137,22 @@ class Rosace::Context
 	def entity(rule, id)
 		rule = Rosace::Utils.sym(rule)
 		id = Rosace::Utils.int(id)
-		@entities.fetch(rule) { |rule|	return nil }[id]
-	end
-
-	# Returns entities of given rule.
-	# @param [#to_sym] rule name of the rule
-	# @return [Enumerable<Entity>] entities of the rule
-	# @raise [TypeError] wrong argument type
-	def entities(rule)
-		@entities.fetch(Rosace::Utils.sym(rule)).values
+		entity = @entities.fetch(rule) { |rule| return nil }[id]
+		if !entity.nil?
+			entity
+		elsif !parent
+			nil
+		else
+			entity = parent.entity(rule, id)
+			if entity.nil?
+				nil
+			else
+				entity = entity.clone
+				entity.send(:context=, self)
+				@entities[rule][id] = entity
+				entity
+			end
+		end
 	end
 
 	# Pick a entity of rule of given name randomly, using a weighted random
@@ -146,9 +169,7 @@ class Rosace::Context
 	def pick_entity(rule, *args)
 		rule = Rosace::Utils.sym(rule)
 		args.each { |arg| Rosace::Utils.check_type(arg, String) }
-		@entities.fetch(rule) do |rule|
-			return nil
-		end.values.select do |entity|
+		@entities.fetch(rule) { return nil }.values.select do |entity|
 			entity.pick?(*args)
 		end.pick
 	end
@@ -162,16 +183,20 @@ class Rosace::Context
 	#  exists in the context
 	def store_variable!(name, value)
 		name = Rosace::Utils.sym(name)
+		global = name[0] == '$'
 		if name == :self
 			raise Rosace::EvaluationException, "symbol self is reserved"
-		elsif @variables[name]
+		elsif variable?(name)
 			raise Rosace::EvaluationException,
 				"symbol #{name} already exists in the context"
 		elsif generator.functions[name]
 			raise Rosace::EvaluationException,
 				"symbol #{name} is already the name of a function"
+		elsif global && parent && !read_only?
+			parent.store_variable!(name, value)
+		else
+			@variables[name] = value
 		end
-		@variables[name] = value
 	end
 
 	# Clear variables and entities.
@@ -179,7 +204,7 @@ class Rosace::Context
 	def reset
 		@variables = {}
 		@entities = generator.rules.values.each_with_object({}) do |rule, hash|
-			hash[rule.rule_name] = rule.entities(self)
+			hash[rule.rule_name] = parent.nil? ? rule.entities(self) : {}
 		end
 		self
 	end
@@ -187,6 +212,97 @@ class Rosace::Context
 	# @param exception [EvaluationException]
 	def log(exception)
 		@logger.info(exception.message)
+	end
+
+	protected
+
+	# @return [Context, nil] Parent context
+	attr_reader :parent
+
+	# @return [Context] Root of the nodes tree
+	def root
+		parent ? parent.root : self
+	end
+
+	# @return [Context] Closest node to the root we can write on
+	def writable_root
+		parent && !read_only? ? parent.writable_root : self
+	end
+
+	# @return [Boolean] true if the parent context must not be modified while
+	#  using this one
+	def read_only?
+		@read_only
+	end
+
+	# Returns entities of given rule.
+	# @param [#to_sym] rule name of the rule
+	# @return [Array<Entity>] entities of the rule
+	# @raise [TypeError] wrong argument type
+	def entities(rule)
+		rule = Rosace::Utils.sym(rule)
+		generator.rules[rule].ids.map { |id| entity(rule, id) }
+	end
+
+	# Writes changes to parent, even if it is read only.
+	# @return [void]
+	def write_to_parent
+		if parent
+			@entities.each do |rule, entities|
+				entities.each do |entity|
+					parent.entity(rule, entity.id).send(:restore_state, entity)
+				end
+			end
+			parent.instance_variable_set(:@variables,
+					write_variables(@variables,
+					parent.instance_variable_get(:@variables), parent, false))
+			root = parent.writable_root
+			root.instance_variable_set(:@variables,
+					write_variables(@variables,
+					root.instance_variable_get(:@variables), root, true))
+		end
+	end
+
+	private
+
+	# Returns a hash with old_vars updated from source.
+	# @param source [Hash{Symbol => Object}] new variables to write
+	# @param old_vars [Hash{Symbol => Object}] variables to override
+	# @param dest_context [Context] context to whom the variables are updated
+	# @param global [Boolean] handles global variables
+	# @return [Hash{Symbol => Object}] new symbol table
+	def write_variables(source, old_vars, dest_context, global)
+		new_vars = {}
+		source.each do |symbol, value|
+			if global && symbol[0] == '$' || !global && old_vars.key?(symbol)
+				if value.is_a?(Rosace::Entity)
+					new_vars[symbol] = dest_context.entity(value.rule.rule_name,
+							value.id)
+				else
+					# @type [Symbol, nil]
+					already_set = new_vars.keys.find do |sym|
+						old_vars[sym].equal?(old_vars[value])
+					end
+					if already_set
+						new_vars[symbol] = new_vars[already_set]
+					else
+						new_vars[symbol] = value.clone
+					end
+				end
+			end
+		end
+		old_vars.each do |symbol, value|
+			unless new_vars.key?(symbol)
+				already_set = new_vars.keys.find do |sym|
+					old_vars[sym].equal?(old_vars[value])
+				end
+				if test
+					
+				end
+				new_vars[symbol] = value
+			end
+		end
+		new_vars
 	end
 
 end
