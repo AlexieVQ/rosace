@@ -217,8 +217,8 @@ class TestContext < Test::Unit::TestCase
 	end
 
 	def test_fork
-		fork1 = @context.clone
-		fork2 = @context.clone
+		fork1 = @context.send(:child)
+		fork2 = @context.send(:child)
 
 		assert_not_same(
 			@context.entity(:SimpleRule, 1),
@@ -251,8 +251,6 @@ class TestContext < Test::Unit::TestCase
 		assert_nil(@context.variable(:var7))
 		assert_equal("string 2", fork1.variable(:var7))
 		assert_equal("string 3", fork2.variable(:var7))
-		fork1.restore_state(@context)
-		assert_nil(fork1.variable(:var7))
 	end
 
 	def test_rule

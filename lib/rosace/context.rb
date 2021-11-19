@@ -20,63 +20,12 @@ class Rosace::Context
 	# Creates a new context.
 	# @param generator [Generator]
 	# @param parent [Context, nil] Parent context
-	# @param read_only [Boolean] true if no modification are allowed on the
 	#  parent context
-	def initialize(generator, parent: nil, read_only: false)
+	def initialize(generator, parent: nil)
 		@generator = generator
 		@logger = Logger.new($stdout)
 		@parent = parent
-		@read_only = read_only
 		self.reset
-	end
-
-	# Copy constructor, used by +clone+ and +dup+.
-	# @see restore_state to understand how +source+’s state is copied in an
-	#  empty Context.
-	def initialize_copy(source)
-		reset
-		restore_state(source)
-		@entities.each_value do |entities|
-			entities.each_value do |entity|
-				entity.send(:context=, self)
-			end
-		end
-	end
-
-	# Restores this context’s state from given +source+ context.
-	# - entities’ states are restored from the one stored in +source+,
-	# - variables’ values from +source+ are cloned in this one,
-	# - if several variables reference the same object in +source+, they will
-	#   reference the same clone in this context,
-	# - if a variable references an Entity in +source+, it will reference the
-	#   corresponding Entity’s instance in this context.
-	# @param source [Context] Context whose state will overwrite this one’s
-	#  state
-	# @return [self]
-	def restore_state(source)
-		unless source.equal?(self)
-			Rosace::Utils.check_type(source, Rosace::Context)
-			@entities.each do |rule_name, rule_entities|
-				rule_entities.each do |id, entity|
-					entity.send(:restore_state, source.entity(rule_name, id))
-				end
-			end
-			variables = source.instance_variable_get(:@variables)
-			@variables = variables.keys.each_with_object({}) do |var, hash|
-				same_var = variables.keys.find do |var2|
-					variables[var2].equal?(variables[var]) && hash.key?(var2)
-				end
-				if variables[var].kind_of?(Rosace::Entity)
-					hash[var] = entity(variables[var].rule.rule_name,
-							variables[var].id)
-				elsif same_var
-					hash[var] = hash[same_var]
-				else
-					hash[var] = variables[var].clone
-				end
-			end
-		end
-		self
 	end
 
 	# Tests if variable of given name exists in the context.
@@ -104,10 +53,18 @@ class Rosace::Context
 		else
 			val = parent.variable(name)
 			if !val.nil?
-				if val.is_a(Rosace::Entity)
+				if val.is_a?(Rosace::Entity)
 					val = entity(val.rule.rule_name, val.id)
-				elsif read_only?
-					val = val.clone
+				else
+					already_set = @variables.keys.find do |symbol|
+						v = parent.variable(symbol)
+						v && v.equal?(val)
+					end
+					if already_set
+						val = @variables[already_set]
+					else
+						val = val.clone
+					end
 					@variables[name] = val
 				end
 			end
@@ -192,8 +149,6 @@ class Rosace::Context
 		elsif generator.functions[name]
 			raise Rosace::EvaluationException,
 				"symbol #{name} is already the name of a function"
-		elsif global && parent && !read_only?
-			parent.store_variable!(name, value)
 		else
 			@variables[name] = value
 		end
@@ -216,23 +171,18 @@ class Rosace::Context
 
 	protected
 
+	# Creates a child context to this one.
+	# @return [Context] Child context
+	def child
+		Rosace::Context.new(generator, parent: self)
+	end
+
 	# @return [Context, nil] Parent context
 	attr_reader :parent
 
 	# @return [Context] Root of the nodes tree
 	def root
 		parent ? parent.root : self
-	end
-
-	# @return [Context] Closest node to the root we can write on
-	def writable_root
-		parent && !read_only? ? parent.writable_root : self
-	end
-
-	# @return [Boolean] true if the parent context must not be modified while
-	#  using this one
-	def read_only?
-		@read_only
 	end
 
 	# Returns entities of given rule.
@@ -245,21 +195,19 @@ class Rosace::Context
 	end
 
 	# Writes changes to parent, even if it is read only.
+	# @param local [Boolean] true to write local variable that does not exist in
+	#  parent context
 	# @return [void]
-	def write_to_parent
+	def write_to_parent(local: false)
 		if parent
 			@entities.each do |rule, entities|
-				entities.each do |entity|
-					parent.entity(rule, entity.id).send(:restore_state, entity)
+				entities.each do |id, entity|
+					parent.entity(rule, id).send(:restore_state, entity)
 				end
 			end
 			parent.instance_variable_set(:@variables,
 					write_variables(@variables,
-					parent.instance_variable_get(:@variables), parent, false))
-			root = parent.writable_root
-			root.instance_variable_set(:@variables,
-					write_variables(@variables,
-					root.instance_variable_get(:@variables), root, true))
+					parent.instance_variable_get(:@variables), parent, local))
 		end
 	end
 
@@ -269,19 +217,20 @@ class Rosace::Context
 	# @param source [Hash{Symbol => Object}] new variables to write
 	# @param old_vars [Hash{Symbol => Object}] variables to override
 	# @param dest_context [Context] context to whom the variables are updated
-	# @param global [Boolean] handles global variables
+	# @param local [Boolean] handles local variables that does not exist in
+	#  old_vars
 	# @return [Hash{Symbol => Object}] new symbol table
-	def write_variables(source, old_vars, dest_context, global)
+	def write_variables(source, old_vars, dest_context, local)
 		new_vars = {}
 		source.each do |symbol, value|
-			if global && symbol[0] == '$' || !global && old_vars.key?(symbol)
+			if symbol[0] == '$' || local || !local && old_vars.key?(symbol)
 				if value.is_a?(Rosace::Entity)
 					new_vars[symbol] = dest_context.entity(value.rule.rule_name,
 							value.id)
 				else
 					# @type [Symbol, nil]
 					already_set = new_vars.keys.find do |sym|
-						old_vars[sym].equal?(old_vars[value])
+						old_vars[sym].equal?(old_vars[symbol])
 					end
 					if already_set
 						new_vars[symbol] = new_vars[already_set]
@@ -294,12 +243,13 @@ class Rosace::Context
 		old_vars.each do |symbol, value|
 			unless new_vars.key?(symbol)
 				already_set = new_vars.keys.find do |sym|
-					old_vars[sym].equal?(old_vars[value])
+					old_vars[sym].equal?(old_vars[symbol])
 				end
-				if test
-					
+				if already_set
+					new_vars[symbol] = new_vars[already_set]
+				else
+					new_vars[symbol] = value
 				end
-				new_vars[symbol] = value
 			end
 		end
 		new_vars

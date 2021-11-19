@@ -135,16 +135,18 @@ module Rosace::ASD
 
 		def eval(context)
 			list = variants.sort { |v1, v2| 1 - 2 * rand(2) }
-			saved_context = context.clone
+			parent = context
 			begin
+				context = parent.send(:child)
 				# @type [Variant]
-				list.pop.eval(context)
+				res = list.pop.eval(context)
+				context.send(:write_to_parent, local: true)
+				res
 			rescue Rosace::EvaluationException => e
 				if list.empty?
 					raise e
 				else
 					context.log(e)
-					context.restore_state(saved_context)
 					retry
 				end
 			end
@@ -251,12 +253,14 @@ module Rosace::ASD
 		end
 
 		def eval(context)
-			saved_context = context.clone
+			parent = context
 			begin
-				rand(2) == 1 ? choice.eval(context) : ""
+				context = parent.send(:child)
+				res = rand(2) == 1 ? choice.eval(context) : ""
+				context.send(:write_to_parent, local: true)
+				res
 			rescue Rosace::EvaluationException => e
 				context.log(e)
-				context.restore_state(saved_context)
 				""
 			end
 		end
@@ -684,8 +688,9 @@ module Rosace::ASD
 				context.entity(rule_name, entity_id)
 			elsif context.generator.functions.key?(symbol)
 				out = context.generator.functions[symbol].
-					call(Rosace::ContextualValue.empty(context))
-				context.restore_state(out.context)
+						call(Rosace::ContextualValue.empty(
+						context.send(:child)))
+				out.context.send(:write_to_parent, local: true)
 				out.value
 			else
 				context.variable(symbol)
@@ -772,20 +777,22 @@ module Rosace::ASD
 		end
 
 		def eval(context)
+			parent = context
+			context = parent.send(:child)
 			f = context.generator.functions[symbol]
 			args = f.type == :sequential ?
 				Rosace::ASD.eval_sequence(arguments, context).map do |arg|
 					Rosace::ContextualValue.new(arg, context)
 				end :
 				arguments.map do |arg|
-					arg_context = context.clone
+					arg_context = parent.send(:child)
 					Rosace::ContextualValue.new(
 						arg.eval(arg_context),
 						arg_context
 					)
 				end
 			out = f.call(*args)
-			context.restore_state(out.context)
+			out.context.send(:write_to_parent, local: true)
 			ensure_value(out.value)
 		end
 
@@ -1089,21 +1096,23 @@ module Rosace::ASD
 	# @return [Array] Results of nodes evaluation
 	# @raise [EvaluationException] unrescued exception
 	def self.eval_sequence(nodes, context)
+		parent = context
 		attempts = MAX_ATTEMPTS
-		saved_context = context.clone
 		deterministic = true
 		begin
+			context = parent.send(:child)
 			deterministic = true
-			nodes.map do |node|
+			res = nodes.map do |node|
 				out = node.eval(context)
 				deterministic &&= node.deterministic?
 				out
 			end
+			context.send(:write_to_parent, local: true)
+			res
 		rescue Rosace::EvaluationException => e
 			if attempts > 0 && !deterministic
 				context.log(e)
 				attempts -= 1
-				context.restore_state(saved_context)
 				retry
 			else
 				raise e
