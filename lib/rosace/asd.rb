@@ -94,6 +94,14 @@ module Rosace::ASD
 			raise Rosace::EvaluationException, "No evaluation for node #{self}"
 		end
 
+		# Raises an EvaluationException.
+		# @param message [String] Exception message
+		# @raise [EvaluationException] Exception raised with given message
+		def except(message)
+			raise Rosace::EvaluationException,
+					"#{rule_name}[#{entity_id}]##{attribute}: #{message}"
+		end
+
 	end
 
 	# Part of a {Variant}.
@@ -518,26 +526,37 @@ module Rosace::ASD
 			receiver_out = receiver.eval(context)
 			setter = "#{symbol.id2name}=".to_sym
 			variable = "@#{symbol.id2name}".to_sym
-			unless operator == "||=" &&
-				receiver_out.respond_to?(symbol) &&
-				receiver_out.send(symbol)
-				@result = value.eval(context)
-				if receiver_out.respond_to?(setter)
-					receiver_out.send(setter, result)
-				elsif receiver_out.respond_to?(symbol) ||
-					receiver_out.instance_variable_defined?(variable)
-					raise Rosace::EvaluationException,
-						"#{rule_name}[#{entity_id}]##{attribute}: attribute " +
-						"\"#{symbol}\" already defined for object " +
-						receiver_out.inspect
+			message = "attribute #{symbol} already defined for object " +
+					receiver_out.inspect
+			if receiver_out.respond_to?(symbol) &&
+					receiver_out.respond_to?(setter)
+				current = receiver_out.send(symbol)
+				if current.nil?
+					@result = value.eval(context)
+					receiver_out.send(setter, @result)
+				elsif operator == "||="
+					@result = current
 				else
-					receiver_out.instance_variable_set(variable, result)
-					receiver_out.define_singleton_method(symbol) do
+					except(message)
+				end
+			elsif receiver_out.respond_to?(setter)
+				@result = value.eval(context)
+				receiver_out.send(setter, @result)
+			else
+				current = receiver_out.instance_variable_get(variable)
+				if current.nil?
+					@result = value.eval(context)
+					receiver_out.instance_variable_set(variable, @result)
+				elsif operator == "||="
+					@result = current
+				else
+					except(message)
+				end
+				unless receiver_out.respond_to?(symbol)
+					receiver_out.class.define_method(symbol) do
 						self.instance_variable_get(variable)
 					end
 				end
-			else
-				@result = receiver_out.send(symbol)
 			end
 			super(context)
 		end

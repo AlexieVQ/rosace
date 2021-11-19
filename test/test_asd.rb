@@ -243,7 +243,7 @@ class TestASD < Test::Unit::TestCase
 			"my second text",
 			@valid_dir1_ctx.entity(:SimpleRule, 2).attr2
 		)
-		assert_false(@valid_dir1_ctx.entity(:SimpleRule, 1).respond_to?(:attr2))
+		assert_nil(@valid_dir1_ctx.entity(:SimpleRule, 1).attr2)
 		assert_raise(Rosace::EvaluationException) do
 			@setter2.eval(@valid_dir1_ctx)
 		end
