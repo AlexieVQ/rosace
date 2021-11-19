@@ -105,8 +105,8 @@ class Rosace::Context
 				nil
 			else
 				entity = entity.clone
-				entity.send(:context=, self)
 				@entities[rule][id] = entity
+				entity.send(:context=, self)
 				entity
 			end
 		end
@@ -205,6 +205,11 @@ class Rosace::Context
 			@entities.each do |rule, entities|
 				entities.each do |id, entity|
 					parent.entity(rule, id).send(:restore_state, entity)
+				end
+			end
+			parent.instance_variable_get(:@entities).each do |rule, entities|
+				entities.each do |id, entity|
+					entity.send(:context=, parent)
 				end
 			end
 			parent.instance_variable_set(:@variables,
