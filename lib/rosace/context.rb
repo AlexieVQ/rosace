@@ -126,7 +126,7 @@ class Rosace::Context
 	def pick_entity(rule, *args)
 		rule = Rosace::Utils.sym(rule)
 		args.each { |arg| Rosace::Utils.check_type(arg, String) }
-		@entities.fetch(rule) { return nil }.values.select do |entity|
+		entities(rule).select do |entity|
 			entity.pick?(*args)
 		end.pick
 	end
@@ -191,7 +191,9 @@ class Rosace::Context
 	# @raise [TypeError] wrong argument type
 	def entities(rule)
 		rule = Rosace::Utils.sym(rule)
-		generator.rules[rule].ids.map { |id| entity(rule, id) }
+		generator.rules.fetch(rule) { return [] }.ids.map do |id|
+			entity(rule, id)
+		end
 	end
 
 	# Writes changes to parent, even if it is read only.
