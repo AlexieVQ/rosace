@@ -300,13 +300,13 @@ class TestDataTypes < Test::Unit::TestCase
 	def test_multiple_calls
 		my_text = Rosace::DataTypes::Text.type.data(
 			*@floc,
-			"{my_var = s(arg1|arg2)}"
+			"{$my_var = s(arg1|arg2)}"
 		)
 		assert_empty(my_text.value(@valid_dir1_st))
-		val = @valid_dir1_st.variable(:my_var)
+		val = @valid_dir1_st.variable(:$my_var)
 		assert_include(["arg1", "arg2"], val)
 		assert_empty(my_text.value(@valid_dir1_st))
-		assert_equal(val, @valid_dir1_st.variable(:my_var))
+		assert_equal(val, @valid_dir1_st.variable(:$my_var))
 	end
 
 	def test_single_call_fail

@@ -85,7 +85,7 @@ assignment_expr	<- ~'`' assignment ~'`' { AssignmentExpr.new(_) }
 
 setter_expr		<- ~'`' setter ~'`' { SetterExpr.new(_) }
 
-lident			<- @([a-z] WORD*) { _.to_sym }
+lident			<- @('$'? [a-z] WORD*) { _.to_sym }
 
 uident			<- @([A-Z] WORD*) { _.to_sym }
 
