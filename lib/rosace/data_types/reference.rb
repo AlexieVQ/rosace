@@ -37,8 +37,8 @@ class Rosace::DataTypes::Reference < Rosace::DataTypes::IntegerType
 						Rosace::WarningMessage
 					messages << message_class.new(
 						"no entity of id #{@id} in rule #{type.target}",
-						context.generator.rules[rule_name],
-						context.entity(rule_name, entity_id),
+						rule_name,
+						entity_id,
 						attribute
 					)
 			end
