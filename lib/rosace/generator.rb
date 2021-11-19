@@ -49,7 +49,7 @@ class Rosace::Generator
 				rescue => exception
 					@messages << Rosace::ErrorMessage.new(
 						exception.message,
-						rule
+						rule.rule_name
 					)
 				end
 			end

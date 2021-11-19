@@ -25,8 +25,8 @@ class Rosace::DataTypes::Reference < Rosace::DataTypes::IntegerType
 				messages << Rosace::ErrorMessage.new(
 					"required reference to rule #{type.target} cannot be" +
 						" null or negative",
-					context.generator.rules[rule_name],
-					context.entity(rule_name, entity_id),
+					rule_name,
+					entity_id,
 					attribute
 				)
 			elsif @id != 0 &&
@@ -111,7 +111,7 @@ class Rosace::DataTypes::Reference < Rosace::DataTypes::IntegerType
 		unless context.generator.rules.key?(self.target)
 			[Rosace::ErrorMessage.new(
 				"no rule named #{self.target}",
-				rule,
+				rule ? rule.rule_name : nil,
 				nil,
 				attribute
 			)]

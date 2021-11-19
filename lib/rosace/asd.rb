@@ -386,16 +386,12 @@ module Rosace::ASD
 			if symbol == :self
 				messages << Rosace::ErrorMessage.new(
 					"\"self\" is a reserved keyword",
-					context.generator.rules[rule_name],
-					context.entity(rule_name, entity_id),
-					attribute
+					rule_name, entity_id, attribute
 				)
 			elsif context.generator.functions.key?(symbol)
 				messages << Rosace::ErrorMessage.new(
 					"\"#{symbol}\" is the name of a function",
-					context.generator.rules[rule_name],
-					context.entity(rule_name, entity_id),
-					attribute
+					rule_name, entity_id, attribute
 				)
 			end
 			messages
@@ -668,8 +664,8 @@ module Rosace::ASD
 						"Wrong number of arguments for \"#{symbol}\" " +
 							"function (#{function.min_arity} expected, 0 " +
 							"given)",
-						context.generator.rules[rule_name],
-						context.entity(rule_name, entity_id),
+						rule_name,
+						entity_id,
 						attribute
 					)
 				end
@@ -731,8 +727,8 @@ module Rosace::ASD
 						"Too few arguments for function \"#{symbol}\" (" +
 							"#{f.min_arity} expected, #{arguments.length} " +
 							"given)",
-						context.generator.rules[rule_name],
-						context.entity(rule_name, entity_id),
+						rule_name,
+						entity_id,
 						attribute
 					)
 				elsif arguments.length > f.max_arity
@@ -740,16 +736,16 @@ module Rosace::ASD
 						"Too many arguments for function \"#{symbol}\" (" +
 							"#{f.max_arity} expected, #{arguments.length} " +
 							"given)",
-						context.generator.rules[rule_name],
-						context.entity(rule_name, entity_id),
+						rule_name,
+						entity_id,
 						attribute
 					)
 				end
 			else
 				messages << Rosace::ErrorMessage.new(
 					"No function named \"#{symbol}\"",
-					context.generator.rules[rule_name],
-					context.entity(rule_name, entity_id),
+					rule_name,
+					entity_id,
 					attribute
 				)
 			end
@@ -833,8 +829,8 @@ module Rosace::ASD
 						"Too few arguments for \"#{symbol}\" picker " +
 							"(#{min_arity} expected, #{arguments.length} " +
 							"given)",
-						context.generator.rules[rule_name],
-						context.entity(rule_name, entity_id),
+						rule_name,
+						entity_id,
 						attribute
 					)
 				elsif arguments.length > max_arity
@@ -842,16 +838,16 @@ module Rosace::ASD
 						"Too many arguments for \"#{symbol}\" picker " +
 							"(#{max_arity} expected, #{arguments.length} " +
 							"given)",
-						context.generator.rules[rule_name],
-						context.entity(rule_name, entity_id),
+						rule_name,
+						entity_id,
 						attribute
 					)
 				end
 			else
 				messages << Rosace::ErrorMessage.new(
 					"No rule named \"#{symbol}\"",
-					context.generator.rules[rule_name],
-					context.entity(rule_name, entity_id),
+					rule_name,
+					entity_id,
 					attribute
 				)
 			end
@@ -996,16 +992,16 @@ module Rosace::ASD
 				unless context.entity?(symbol, id)
 					messages << Rosace::ErrorMessage.new(
 						"No entity of id #{id} in rule \"#{symbol}\"",
-						context.generator.rules[rule_name],
-						context.entity(rule_name, entity_id),
+						rule_name,
+						entity_id,
 						attribute
 					)
 				end
 			else
 				messages << Rosace::ErrorMessage.new(
 					"No rule named \"#{symbol}\"",
-					context.generator.rules[rule_name],
-					context.entity(rule_name, entity_id),
+					rule_name,
+					entity_id,
 					attribute
 				)
 			end

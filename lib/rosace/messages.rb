@@ -1,4 +1,5 @@
 require_relative '../rosace'
+require_relative 'messages'
 
 # Object storing a message when analyzing a rule.
 #
@@ -13,10 +14,10 @@ class Rosace::Message
 	# @return [String] level (usually +'ERROR'+, +'WARNING'+)
 	attr_reader :level
 
-	# @return [Class, nil] concerned rule (or +nil+ if none)
+	# @return [Symbol, nil] concerned rule (or +nil+ if none)
 	attr_reader :rule
 
-	# @return [Entity, nil] concerned entity (or +nil+ if none)
+	# @return [Integer, nil] concerned entity (or +nil+ if none)
 	attr_reader :entity
 
 	# @return [Symbol, nil] concerned attribute (or +nil+ if none)
@@ -24,14 +25,14 @@ class Rosace::Message
 
 	# Creates a message.
 	# @param [#to_str] message message
-	# @param [Class] rule concerned rule
-	# @param [Entity] entity concerned entity of the rule
-	# @param [Symbol] attribute concerned attribute
+	# @param [#to_sym, nil] rule concerned rule
+	# @param [#to_int, nil] entity concerned entity of the rule
+	# @param [#to_sym, nil] attribute concerned attribute
 	def initialize(message, rule = nil, entity = nil, attribute = nil)
 		@message = message.to_str
-		@rule = rule
-		@entity = entity
-		@attribute = attribute
+		@rule = rule ? Rosace::Utils.sym(rule) : nil
+		@entity = entity ? Rosace::Utils.int(entity) : nil
+		@attribute = attribute ? Rosace::Utils.sym(attribute) : nil
 	end
 
 	# Returns the message, with its level, concerned rule and entity.
@@ -39,15 +40,15 @@ class Rosace::Message
 	def to_s
 		"#{
 			if self.rule
-				"Rule #{self.rule.rule_name} (#{self.rule.file})#{
+				"#{self.rule}#{
 					if self.entity
-						", entity #{self.entity.inspect}"
+						"[#{self.entity}]"
 					else
 						""
 					end
 				}#{
 					if self.attribute
-						", attribute \"#{self.attribute}\": "
+						"#\"#{self.attribute}\": "
 					else
 						": "
 					end

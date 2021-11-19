@@ -382,7 +382,7 @@ class Rosace::Entity
 							"Attribute #{relation[:foreign_attribute]} from " +
 								"rule #{relation[:foreign_rule]} is not a " +
 								"reference to this rule",
-							self,
+							self.rule_name,
 							nil,
 							name
 						)
@@ -392,7 +392,7 @@ class Rosace::Entity
 					messages << Rosace::ErrorMessage.new(
 						"Rule #{relation[:foreign_rule]} has no " +
 							"#{relation[:foreign_attribute]} attribute",
-						self,
+						self.rule_name,
 						nil,
 						name
 					)
@@ -401,7 +401,7 @@ class Rosace::Entity
 			else
 				messages << Rosace::ErrorMessage.new(
 					"Rule #{relation[:foreign_rule]} does not exist",
-					self,
+					self.rule_name,
 					nil,
 					name
 				)
@@ -416,8 +416,8 @@ class Rosace::Entity
 						messages << Rosace::ErrorMessage.new(
 							"No entity of rule #{relation[:foreign_rule]} " +
 								"does reference this entity",
-							self,
-							entity,
+							self.rule_name,
+							entity.id,
 							name
 						)
 					end

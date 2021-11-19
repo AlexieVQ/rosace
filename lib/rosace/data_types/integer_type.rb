@@ -31,8 +31,8 @@ class Rosace::DataTypes::IntegerType < Rosace::DataTypes::DataType
 				messages << Rosace::WarningMessage.new(
 					"\"#{plain_value}\" is confusing for an integer " +
 						"(#{value} inferred)",
-					context.generator.rules[rule_name],
-					context.entity(rule_name, entity_id),
+					rule_name,
+					entity_id,
 					attribute
 				)
 			end
