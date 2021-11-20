@@ -343,8 +343,7 @@ module Rosace::ASD
 		end
 
 		def eval(context)
-			out = expression.eval(context)
-			eval_value(out, context)
+			eval_value(expression.eval(context), context)
 		end
 
 		private
@@ -480,9 +479,6 @@ module Rosace::ASD
 		# @return ["=", "||="] Assignment operator
 		attr_reader :operator
 
-		# @return Result of the value’s evaluation
-		attr_reader :result
-		
 		# Creates an attribute setter.
 		# @param receiver [Expression] Object receiving this assignment
 		# @param symbol [Symbol] Name of the attribute to assign
@@ -532,24 +528,18 @@ module Rosace::ASD
 					receiver_out.respond_to?(setter)
 				current = receiver_out.send(symbol)
 				if current.nil?
-					@result = value.eval(context)
-					receiver_out.send(setter, @result)
-				elsif operator == "||="
-					@result = current
-				else
+					receiver_out.send(setter, value.eval(context))
+				elsif operator == "="
 					except(message)
 				end
 			elsif receiver_out.respond_to?(setter)
-				@result = value.eval(context)
-				receiver_out.send(setter, @result)
+				except("#{symbol}= setter but no getter defined for object " +
+						receiver_out.inpsect)
 			else
 				current = receiver_out.instance_variable_get(variable)
 				if current.nil?
-					@result = value.eval(context)
-					receiver_out.instance_variable_set(variable, @result)
-				elsif operator == "||="
-					@result = current
-				else
+					receiver_out.instance_variable_set(variable, value.eval(context))
+				elsif operator == "="
 					except(message)
 				end
 				unless receiver_out.respond_to?(symbol)
@@ -640,9 +630,8 @@ module Rosace::ASD
 		end
 
 		def eval(context)
-			outs = Rosace::ASD.eval_sequence([expression] + arguments, context)
-			expr_out = outs.first
-			args = outs[1, outs.length]
+			expr_out = expression.eval(context)
+			args = Rosace::ASD.eval_sequence(arguments, context)
 			ensure_value(expr_out.send(symbol, *args))
 		end
 
@@ -793,11 +782,10 @@ module Rosace::ASD
 
 		def eval(context)
 			parent = context
-			context = parent.send(:child)
 			f = context.generator.functions[symbol]
 			args = f.type == :sequential ?
-				Rosace::ASD.eval_sequence(arguments, context).map do |arg|
-					Rosace::ContextualValue.new(arg, context)
+				Rosace::ASD.eval_sequence(arguments, parent).map do |arg|
+					Rosace::ContextualValue.new(arg, parent)
 				end :
 				arguments.map do |arg|
 					arg_context = parent.send(:child)
@@ -807,7 +795,9 @@ module Rosace::ASD
 					)
 				end
 			out = f.call(*args)
-			out.context.send(:write_to_parent, local: true)
+			if f.type == :concurrent
+				out.context.send(:write_to_parent, local: true)
+			end
 			ensure_value(out.value)
 		end
 
@@ -983,7 +973,9 @@ module Rosace::ASD
 
 		def eval(context)
 			setter.eval(context)
-			ensure_value(setter.result)
+			value = MethodCall.new(setter.receiver, setter.symbol, []).
+					eval(context)
+			ensure_value(value)
 		end
 		
 	end
@@ -1108,7 +1100,7 @@ module Rosace::ASD
 	#  {EvaluationException} happens and one of the node is non-deterministic.
 	# @param nodes [Array<Node>] Sequence of nodes to evaluate
 	# @param context [Context] Evaluation context
-	# @return [Array] Results of nodes evaluation
+	# @return [Array<String>] Results of nodes evaluation
 	# @raise [EvaluationException] unrescued exception
 	def self.eval_sequence(nodes, context)
 		parent = context
