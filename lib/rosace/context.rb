@@ -38,6 +38,12 @@ class Rosace::Context
 				!parent.nil? && parent.variable?(name)
 	end
 
+	# Returns stored variables' names.
+	# @return [Array<Symbol>] variables' names
+	def variables
+		(@variables.keys + (parent ? parent.variables : [])).uniq
+	end
+
 	# Returns stored value into variable of given name.
 	# @param [#to_sym] name variable name
 	# @return [Object, nil] value stored, or +nil+ if there is no variable of
@@ -140,7 +146,6 @@ class Rosace::Context
 	#  exists in the context
 	def store_variable!(name, value)
 		name = Rosace::Utils.sym(name)
-		global = name[0] == '$'
 		if name == :self
 			raise Rosace::EvaluationException, "symbol self is reserved"
 		elsif variable?(name)
