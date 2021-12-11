@@ -58,10 +58,12 @@ module Rosace::DataTypes
 			# Returns the value of this piece of data in the target type.
 			# @param context [Context] Context to use to evaluate this piece of
 			#  data
+			# @param read_only [Boolean] Whether the context must be modified
+			#  after evaluation, or not
 			# @returns Value of this piece of data in the target type
 			# @raise [EvaluationException] Exception thrown during its evaluation that
 			#  has not been rescued.
-			def value(context)
+			def value(context, read_only: false)
 				@plain_value
 			end
 

@@ -46,17 +46,19 @@ class Rosace::DataTypes::Text < Rosace::DataTypes::DataType
 
 		# Evaluates this text.
 		# @param context [Context] Evaluation context
+		# @param read_only [Boolean] Whether the context must by modified after
+		#  evaluation, or not
 		# @return [String] Evaluated text
 		# @raise [EvaluationException] Exception during evaluation that has not been
 		#  rescued.
-		def value(context)
+		def value(context, read_only: false)
 			parent = context
 			begin
 				context = parent.send(:child)
 				# @type [String] Last evaluation, in case of failure if the
 				#  method is called again
 				@last_eval = @ast.eval(context)
-				context.send(:write_to_parent, local: false)
+				context.send(:write_to_parent, local: false) unless read_only
 				@last_eval
 			rescue Rosace::EvaluationException => e
 				if @last_eval

@@ -514,6 +514,15 @@ class Rosace::Entity
 		restore_state(source)
 	end
 
+	# Evaluate given attribute, without modifying the context.
+	# @param attribute [#to_sym] Name of the attribute to evaluate
+	# @return Evaluation's result
+	# @raise [ArgumentError] No such attribute
+	def read_only_eval(attribute)
+		@attributes[Rosace::Utils.sym(attribute)].eval(context, read_only: true)
+	end
+
+
 	# Returns the entity's id.
 	# @note It is strongly recommended to not override this method, as the
 	#  +id+ attribute must always return the id as it is in the context.
