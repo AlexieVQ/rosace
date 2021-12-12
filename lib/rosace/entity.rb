@@ -519,9 +519,29 @@ class Rosace::Entity
 	# @return Evaluation's result
 	# @raise [ArgumentError] No such attribute
 	def read_only_eval(attribute)
-		@attributes[Rosace::Utils.sym(attribute)].eval(context, read_only: true)
+		attribute = Rosace::Utils.sym(attribute)
+		unless @attributes.key?(attribute)
+			raise ArgumentError,
+					"No attribute named #{attribute} for entity " +
+					"#{rule.rule_name}[#{id}]"
+		end
+		@attributes[attribute].eval(context, read_only: true)
 	end
 
+	# Returns given attribute's value, as it is defined in the CSV file, without
+	# evaluation.
+	# @param attribute [#to_sym] Name of the attribute
+	# @return [String] Attribute's plain value
+	# @raise [ArgumentError] No such attribute
+	def plain_value(attribute)
+		attribute = Rosace::Utils.sym(attribute)
+		unless @attributes.key?(attribute)
+			raise ArgumentError,
+					"No attribute named #{attribute} for entity " +
+					"#{rule.rule_name}[#{id}]"
+		end
+		@attributes[attribute].plain_value
+	end
 
 	# Returns the entity's id.
 	# @note It is strongly recommended to not override this method, as the
